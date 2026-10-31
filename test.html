@@ -28,6 +28,11 @@
   .grid{display:grid;gap:8px;justify-content:center;align-content:start}
   .ph{position:relative;border-radius:16px;overflow:hidden;border:2px solid var(--line);background:#000}
   .ph iframe{position:absolute;left:0;top:0;width:360px;height:740px;border:0;transform-origin:0 0}
+  .tvbox{overflow:auto}
+  .anim{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:6px}
+  .anim b{font-size:13px}
+  .abtns{display:flex;flex-wrap:wrap;gap:6px}
+  .abtns button{font-size:13px;padding:5px 9px}
   .ph span{position:absolute;right:6px;top:4px;font-size:11px;background:#000a;padding:1px 6px;border-radius:6px;z-index:2;pointer-events:none}
 </style>
 </head>
@@ -45,6 +50,22 @@
     <div class="tvwrap"><iframe id="tv" title="Telewizor"></iframe></div>
     <div class="cap">📺 Telewizor – tryb „każdy swój telefon”. Sterowanie: myszka albo klawiatura (strzałki + Enter).</div>
     <div class="links" id="links"></div>
+    <div class="anim">
+      <b>🎬 Test animacji – TV</b>
+      <div class="abtns">
+        <button data-tv="kill">🔪 Zabójstwo</button><button data-tv="kill2">🔪🔪 Dwie ofiary + zemsta</button><button data-tv="poison">☠️ Trucizna</button>
+        <button data-tv="save">🛡️ Obrona</button><button data-tv="dove">🕊️ Druga szansa</button><button data-tv="killsave">🔪+🛡️+🕊️ Wszystko naraz</button>
+        <button data-tv="eject">🚪 Wyrzucenie (mafia)</button><button data-tv="eject2">🚪 Wyrzucenie (niewinny)</button><button data-tv="bomb">💣 Bomba</button>
+        <button data-tv="night">🌙 Noc</button><button data-tv="day">☀️ Dzień</button><button data-tv="townwin">🏙️ Wygrywa miasto</button><button data-tv="mafiawin">🕴️ Wygrywa mafia</button>
+      </div>
+      <b>📱 Test animacji – telefon (pierwszy gracz)</b>
+      <div class="abtns">
+        <button data-ph="check-m">🕵️ Śledztwo: MAFIA</button><button data-ph="check-c">🕵️ Śledztwo: CZYSTY</button><button data-ph="role">📁 Teczka</button>
+        <button data-ph="shield">🛡️ Przeżyłeś atak</button><button data-ph="dove">🕊️ Druga szansa</button><button data-ph="alarm">🚨 Alarm</button>
+        <button data-ph="hit-ok">🔪 Zlecenie wykonane</button><button data-ph="hit-no">🛡️ Ofiara przeżyła</button><button data-ph="dead">💀 Zginąłeś</button>
+      </div>
+      <p class="cap">Pokaz zatrzymuje prawdziwą grę – „▶ Uruchom od nowa” wraca do normalnej rozgrywki. Wybierz grę „Mafia”.</p>
+    </div>
   </div>
   <div class="phones"><div class="grid" id="grid"></div></div>
 </div>
@@ -101,6 +122,23 @@
     }
     if (blocked) alert('Przeglądarka zablokowała część okien. Zezwól na wyskakujące okienka dla tej strony albo użyj linków pod telewizorem.');
   };
+  // ---------- pokaz animacji ----------
+  const tvWin = () => $('tv').contentWindow;
+  document.querySelectorAll('[data-tv]').forEach(b => b.onclick = () => {
+    if ($('game').value !== 'mafia') { $('game').value = 'mafia'; start(); return setTimeout(() => b.click(), 2500); }
+    const w = tvWin(); if (w && w.TV && w.TV.demo) { w.TV.demo(b.dataset.tv); try { w.focus(); } catch (e) {} }
+  });
+  const PL = ['Ania', 'Bartek', 'Celina', 'Darek', 'Ewa', 'Franek'].map((n, i) => ({ id: 'd' + i, name: n, color: ['#ff4d6d', '#4dabf7', '#51cf66', '#fcc419', '#cc5de8', '#ff922b'][i], emoji: ['🐱', '🦊', '🐸', '🦁', '🐷', '🐙'][i], score: 0, delta: 0, online: true, alive: true }));
+  document.querySelectorAll('[data-ph]').forEach(b => b.onclick = () => {
+    const w = tvWin(); if (w && w.MafiaGame && w.MafiaGame.active) w.MafiaGame.deactivate();
+    const f = document.querySelector('.ph iframe'); if (!f || !f.contentWindow.__playerDemo) return alert('Poczekaj, aż telefony się załadują.');
+    const k = b.dataset.ph, dead = k === 'dead';
+    const fx = { 'check-m': { k: 'check', t: 'd3', m: true, src: '🕵️ Śledztwo' }, 'check-c': { k: 'check', t: 'd2', m: false, src: '🔍 Lupa' }, role: { k: 'role', t: 'd4', r: 'doctor', src: '📁 Teczka' },
+      shield: { k: 'shield' }, dove: { k: 'dove' }, alarm: { k: 'alarm', t: 'd5' }, 'hit-ok': { k: 'hit', t: 'd1', ok: true }, 'hit-no': { k: 'hit', t: 'd1', ok: false }, dead: { k: 'dead' } }[k];
+    const me = Object.assign({}, PL[0], { alive: !dead });
+    f.contentWindow.__playerDemo({ type: 'p', game: 'mafia', phase: 'morning', me, players: PL.map(p => p.id === 'd0' ? me : p), inRound: true, alive: !dead,
+      role: k.startsWith('hit') ? 'mafia' : 'cop', mates: [], day: Date.now(), morning: { day: 2, victims: dead ? [{ id: 'd0', role: 'cop' }] : [] }, fx: [fx], priv: [], feed: [], dead: {} });
+  });
   start();
 })();
 </script>

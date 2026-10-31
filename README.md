@@ -29,6 +29,7 @@ Otwórz **`vcbgf5.github.io/Impostorgame/test`** (albo `test.html`) na komputerz
 - Wybierz grę (Mafia / Impostor) i liczbę graczy, potem „▶ Uruchom od nowa”.
 - „🪟 Gracze w osobnych oknach” otwiera każdego gracza w osobnym oknie (albo kliknij linki pod telewizorem).
 - Wszystko działa lokalnie w tej przeglądarce: bez internetu i bez kodu.
+- **🎬 Test animacji:** przyciski pod telewizorem odpalają każdą animację od razu. Na TV: zabójstwo, trucizna, obrona, gołąb, wyrzucenie, bomba, noc, dzień, koniec gry. Na telefonie: śledztwo, teczka, tarcza, alarm, zlecenie, śmierć.
 
 ---
 

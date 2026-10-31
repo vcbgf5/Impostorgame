@@ -16,7 +16,7 @@ function create(opts) {
     phase: 'setup', st: null, timer: null, auto: null, msg: '',
     morning: null, elim: null, games: 0,
     pass: null,
-    deck: [], hands: {}, offers: {}, feed: [], played: {}, nightCards: [], voteCards: [], gagged: {}, priv: {},
+    deck: [], hands: {}, offers: {}, feed: [], played: {}, nightCards: [], voteCards: [], gagged: {}, priv: {}, privFx: {},
     poisoned: {}, flags: {}, secretVote: false, spotlight: null,
   };
   if (mode === 'single') E.settings.cards = 0;
@@ -59,6 +59,8 @@ function create(opts) {
   const C = k => KC().CARDS[k];
   function announce(text) { E.feed.push({ text, at: Date.now() }); if (E.feed.length > 30) E.feed.shift(); E.toast(text); }
   function privMsg(id, text) { (E.priv[id] = E.priv[id] || []).push(text); }
+  // dane do animacji na telefonie (śledztwo, ocalenie, alarm…)
+  function privFx(id, fx) { (E.privFx[id] = E.privFx[id] || []).push(fx); }
   const hand = id => (E.hands[id] = E.hands[id] || []);
   const inPlay = () => [...Object.values(E.hands).flat(), ...Object.values(E.offers).flat()];
   function drawFor(t) { return KC().drawFor(E.deck, t, inPlay()); }
@@ -102,7 +104,7 @@ function create(opts) {
   E.skipWait = () => { if (E.phase === 'roles') goNight(); else if (E.phase === 'night') endNight(); };
 
   function goNight() {
-    cancel(); M.startNight(E.st); E.phase = 'night'; E.nightCards = []; E.priv = {}; E.spotlight = null;
+    cancel(); M.startNight(E.st); E.phase = 'night'; E.nightCards = []; E.priv = {}; E.privFx = {}; E.spotlight = null;
     E.timer = mode === 'multi' ? mkTimer(E.settings.night, endNight) : null;
     E.pass = mode === 'single' ? { order: M.alive(E.st).map(p => p.id), idx: 0, stage: 'pass' } : null;
     changed();
@@ -172,10 +174,10 @@ function create(opts) {
     attacks.forEach(a => {
       const t = a.target;
       if (!aliveP(t)) return;
-      if ((fx('alarm').some(f => f.by === t && ok(f)) || passive(t, 'alarmp')) && a.by.length) privMsg(t, `🚨 Alarm! Zaatakował cię: ${nameOf(pickR(a.by))}`);
+      if ((fx('alarm').some(f => f.by === t && ok(f)) || passive(t, 'alarmp')) && a.by.length) { const at = pickR(a.by); privMsg(t, `🚨 Alarm! Zaatakował cię: ${nameOf(at)}`); privFx(t, { k: 'alarm', t: at }); }
       if (a.main && fx('trap').some(f => f.by === t && ok(f))) { const m = pickR(mafiaAlive); if (m) notes.push(`🪤 Pułapka! ${nameOf(m)} należy do mafii!`); }
-      if (protect.has(t)) { saved = true; return; }
-      if (usePassive(t, 'dove')) { dove = true; privMsg(t, '🕊️ Karta uratowała ci życie tej nocy!'); return; }
+      if (protect.has(t)) { saved = true; privFx(t, { k: 'shield' }); return; }
+      if (usePassive(t, 'dove')) { dove = true; privMsg(t, '🕊️ Karta uratowała ci życie tej nocy!'); privFx(t, { k: 'dove' }); return; }
       const p = st.players.find(q => q.id === t); p.alive = false; p.diedNight = st.day;
       victims.push({ id: t, role: E.settings.reveal && !(a.main && silent) ? st.roles[t] : null, poison: !!a.poison });
       if (cardsOn() && usePassive(t, 'revenge')) {
@@ -188,12 +190,12 @@ function create(opts) {
     });
     // 5) śledztwa i obserwacje (wyniki prywatne)
     const cop = st.players.find(p => st.roles[p.id] === 'cop' && (p.alive || p.diedNight === st.day));
-    if (cop && N.check) privMsg(cop.id, `🕵️ Śledztwo: ${nameOf(N.check)} ${seemsMafia(N.check) ? 'JEST w mafii!' : 'nie jest w mafii.'}`);
+    if (cop && N.check) { privMsg(cop.id, `🕵️ Śledztwo: ${nameOf(N.check)} ${seemsMafia(N.check) ? 'JEST w mafii!' : 'nie jest w mafii.'}`); privFx(cop.id, { k: 'check', t: N.check, m: seemsMafia(N.check), src: '🕵️ Śledztwo' }); }
     fx('inv').filter(ok).forEach(f => {
       const ic = cardName(f.card);
-      if (f.kind === 'mafia') privMsg(f.by, `${ic}: ${nameOf(f.target)} ${seemsMafia(f.target) ? 'JEST w mafii!' : 'nie jest w mafii.'}`);
+      if (f.kind === 'mafia') { privMsg(f.by, `${ic}: ${nameOf(f.target)} ${seemsMafia(f.target) ? 'JEST w mafii!' : 'nie jest w mafii.'}`); privFx(f.by, { k: 'check', t: f.target, m: seemsMafia(f.target), src: ic }); }
       if (f.kind === 'special') privMsg(f.by, `${ic}: ${nameOf(f.target)} ${seemsSpecial(f.target) ? 'ma specjalną rolę.' : 'nie ma specjalnej roli.'}`);
-      if (f.kind === 'role') { const R = M.ROLES[seemsRole(f.target)]; privMsg(f.by, `${ic}: ${nameOf(f.target)} to ${R.emoji} ${R.name}.`); }
+      if (f.kind === 'role') { const R = M.ROLES[seemsRole(f.target)]; privMsg(f.by, `${ic}: ${nameOf(f.target)} to ${R.emoji} ${R.name}.`); privFx(f.by, { k: 'role', t: f.target, r: seemsRole(f.target), src: ic }); }
     });
     const visits = id => {
       const v = new Set();
@@ -219,7 +221,9 @@ function create(opts) {
     });
     const cnt = {}; Object.values(N.suspect || {}).forEach(t => { cnt[t] = (cnt[t] || 0) + 1; });
     const top = Object.entries(cnt).sort((a, b) => b[1] - a[1])[0];
-    E.morning = { day: st.day, victims, saved, dove, notes, suspect: top && top[1] >= 2 ? top[0] : null };
+    E.morning = { day: st.day, victims, saved, dove, notes, suspect: top && top[1] >= 2 ? top[0] : null, poison: victims.some(v => v.poison) };
+    if (main) mafiaAlive.forEach(m => privFx(m, { k: 'hit', t: main, ok: victims.some(v => v.id === main) }));
+    victims.forEach(v => privFx(v.id, { k: 'dead' }));
     notes.forEach(n => E.feed.push({ text: n, at: Date.now() }));
     dealCards();
     E.phase = 'morning'; changed();
@@ -484,6 +488,7 @@ function create(opts) {
       o.deadPlayers = st.players.filter(q => !q.alive).map(q => q.id);
     }
     o.priv = E.priv[id] || [];
+    o.fx = E.privFx[id] || [];
     return o;
   };
   return E;

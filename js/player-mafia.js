@@ -3,6 +3,8 @@
 'use strict';
 const R = window.MafiaCore.ROLES;
 let ui = { card: null, gift: null }; // wybrana karta do zagrania / karta ducha do oddania
+const fxSeen = {}; // animacja ma się odegrać raz – potem pokazujemy stan końcowy
+const once = key => { const now = Date.now(); if (!fxSeen[key]) fxSeen[key] = now; return now - fxSeen[key] > 4500 ? 'still' : ''; };
 
 window.PlayerMafia = {
   reset() { ui = { card: null, gift: null }; },
@@ -15,6 +17,23 @@ window.PlayerMafia = {
     const msgs = () => (P.priv || []).length ? `<div class="card inbox"><b>📬 Tylko dla ciebie</b>${P.priv.map(t => `<p>${esc(t)}</p>`).join('')}</div>` : '';
     const clock = () => P.timer ? `<div class="clock sm" data-timer>${h.fmt(h.timerLeft())}</div>` : '';
     const role = P.role && R[P.role];
+
+    // ---------- animacje prywatne (śledztwo, tarcza, gołąb, alarm, zlecenie) ----------
+    function fxHTML() {
+      return (P.fx || []).filter(f => f.k !== 'dead').map((f, i) => {
+        const st = once(`${P.day}|${i}|${JSON.stringify(f)}`), p = f.t && PL(f.t);
+        if (f.k === 'check') return `<div class="fxc check ${f.m ? 'bad' : 'good'} ${st}"><small>${esc(f.src || '🕵️ Śledztwo')}</small>
+          <div class="scan">${av(p, 'xl')}<i class="lens">🔍</i><i class="beam"></i></div><div class="stamp2">${f.m ? 'MAFIA!' : 'CZYSTY'}</div><b>${nm(f.t)}</b></div>`;
+        if (f.k === 'role') { const r = R[f.r]; return `<div class="fxc check role ${f.r === 'mafia' ? 'bad' : 'good'} ${st}"><small>${esc(f.src)}</small>
+          <div class="scan">${av(p, 'xl')}<i class="lens">📁</i><i class="beam"></i></div><div class="stamp2">${r.emoji} ${r.name.toUpperCase()}</div><b>${nm(f.t)}</b></div>`; }
+        if (f.k === 'shield') return `<div class="fxc shieldc ${st}"><div class="sv2">${av(P.me, 'xl')}<i class="knife2">🔪</i><i class="shield2"></i></div><b>Ktoś cię zaatakował… ale przeżyłeś!</b></div>`;
+        if (f.k === 'dove') return `<div class="fxc dovec ${st}"><div class="dove2">🕊️</div><b>Druga szansa uratowała ci życie!</b></div>`;
+        if (f.k === 'alarm') return `<div class="fxc alarmc ${st}"><div class="siren">🚨</div><b>Napastnik: ${nm(f.t)}</b></div>`;
+        if (f.k === 'hit') return `<div class="fxc hit ${f.ok ? 'bad' : 'good'} ${st}"><div class="scan">${av(p, 'xl')}${f.ok ? '<i class="slash2"></i><i class="slash2 b"></i>' : '<i class="shield2"></i>'}</div><b>${f.ok ? '🔪 Zlecenie wykonane' : '🛡️ Ofiara przeżyła atak'}: ${nm(f.t)}</b></div>`;
+        return '';
+      }).join('');
+    }
+    const deathFx = () => (P.fx || []).some(f => f.k === 'dead') && P.phase === 'morning' ? `<div class="deathfx ${once('dead|' + P.day)}"><div class="crack"></div><b>💀</b><h2>Zginąłeś tej nocy</h2></div>` : '';
 
     // ---------- karty w ręce ----------
     const phaseNames = { night: 'w nocy', day: 'w dyskusji', vote: 'w głosowaniu', passive: 'działa sama' };
@@ -67,7 +86,7 @@ window.PlayerMafia = {
     }
 
     if (P.alive === false && P.phase !== 'end') {
-      return `<div class="center ghostscr"><div class="big-emoji">👻</div><h1>Jesteś duchem</h1>
+      return `${deathFx()}<div class="center ghostscr"><div class="big-emoji">👻</div><h1>Jesteś duchem</h1>
         <p class="muted">Nie zdradzaj nic żywym! Byłeś: ${role.emoji} <b>${role.name}</b>.</p>
         ${P.cardsOn ? ghostHTML() : ''}</div>`;
     }
@@ -87,9 +106,9 @@ window.PlayerMafia = {
       const m = P.morning || { victims: [] };
       return `<div class="center"><div class="step">☀️ Dzień ${m.day}</div>
         <h2>${m.victims.length ? '💀 ' + m.victims.map(v => nm(v.id)).join(', ') : m.saved || m.dove ? '🩺 Nikt nie zginął!' : '🌤️ Spokojna noc'}</h2>
-        ${msgs()}<p class="muted">Patrzcie na telewizor 📺</p>${handHTML()}</div>`;
+        ${fxHTML()}${msgs()}<p class="muted">Patrzcie na telewizor 📺</p>${handHTML()}</div>`;
     }
-    if (P.phase === 'day') return `<div class="center"><div class="step">☀️ Dyskusja</div>${clock()}<p>Kto jest w mafii? Rozmawiajcie!</p>${msgs()}${handHTML()}</div>`;
+    if (P.phase === 'day') return `<div class="center"><div class="step">☀️ Dyskusja</div>${clock()}<p>Kto jest w mafii? Rozmawiajcie!</p>${fxHTML()}${msgs()}${handHTML()}</div>`;
     if (P.phase === 'vote') {
       if (P.gagged) return `<div class="center"><div class="big-emoji">🤐</div><h2>Masz knebel</h2><p class="muted">W tym głosowaniu nie głosujesz.</p>${handHTML()}</div>`;
       return `<div class="center"><div class="step">🗳️ Głosowanie · ${P.voteCount || 0}/${P.voteTotal || 0}</div>${clock()}

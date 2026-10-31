@@ -143,6 +143,7 @@ T.reg('ma-night', {
     const p = passing && P(s.pass.cur);
     return `<div class="scene center night">
       <div class="stars">${stars}</div><div class="moon"></div>${skyline()}
+      <div class="sneak"><i style="--t:0s">🕴️</i><i style="--t:-7s">🕴️</i><i style="--t:-13s;--s:-1">🕵️</i></div>
       <div class="kicker">Noc ${s.day}</div>
       <div class="title night-t">Miasto śpi…</div>
       ${passing ? `<p class="big-p">${s.pass.stage === 'act' ? 'Ruch wykonuje' : 'Podajcie telefon do'}</p>${av(p, 'lg')}<div class="name-big" style="color:${p.color}">${esc(p.name)}</div>
@@ -156,14 +157,28 @@ T.reg('ma-night', {
   mount: () => { const s = S(); if (!s.pass || s.pass.idx === 0) { SFX('night'); say(`Noc ${s.day}. Miasto zasypia. Mafia wybiera ofiarę, policjant prowadzi śledztwo, a lekarz kogoś ratuje.${s.pass ? ' Podawajcie telefon po kolei.' : ''}`); } },
 });
 
+/* ---------------- animacje: zabójstwo, obrona, gołąb ---------------- */
+const killAnim = (v, d) => {
+  const p = P(v.id);
+  return `<div class="kill ${v.poison ? 'poison' : ''}" style="--d:${d}s">
+    <div class="kv">${av(p, 'lg')}<i class="sl s1"></i><i class="sl s2"></i><i class="sl s3"></i>${v.poison ? '<i class="bub">🫧</i><i class="bub b2">🫧</i>' : ''}<b class="skull">💀</b></div>
+    <div class="kname"><b>${esc(p.name)}</b>${v.role ? roleTag(v.role) : '<div class="mrole">❔ rola ukryta</div>'}${v.poison ? '<small>☠️ otruty</small>' : ''}${v.revenge ? '<small>👊 zemsta zza grobu</small>' : ''}</div></div>`;
+};
+const saveAnim = d => `<div class="save" style="--d:${d}s"><div class="sv"><div class="av lg sil">❓</div><i class="knife">🔪</i><i class="shield"></i><i class="spark">✨</i><i class="spark p2">💥</i></div><div class="kname"><b>🛡️ Uratowany!</b><small>atak odparty</small></div></div>`;
+const doveAnim = d => `<div class="dovefly" style="--d:${d}s">🕊️</div>`;
+
 /* ---------------- poranek ---------------- */
 T.reg('ma-morning', {
   html: () => {
     const s = S(), m = s.morning || { victims: [] };
     let body;
+    const kills = m.victims.map((v, i) => killAnim(v, 0.8 + i * 2.6)).join('');
+    const after = 0.8 + m.victims.length * 2.6;
     if (m.victims.length) body = `<div class="kicker">Tej nocy ${m.victims.length > 1 ? 'zginęli' : 'zginęła osoba'}…</div>
-      <div class="victims">${m.victims.map((v, i) => { const p = P(v.id); return `<div class="victim" style="animation-delay:${1.2 + i * 0.6}s">${av(p, 'lg')}<b>${esc(p.name)}</b>${v.role ? roleTag(v.role) : '<div class="mrole">❔ rola ukryta</div>'}${v.poison ? '<small>☠️ otruty</small>' : ''}</div>`; }).join('')}</div>`;
-    else if (m.saved || m.dove) body = `<div class="big-emoji pop">🩺</div><div class="title">Nikt nie zginął!</div><p class="big-p">Mafia zaatakowała, ale ofiara została uratowana.</p>`;
+      <div class="victims">${kills}${m.saved ? saveAnim(after) : ''}</div>${m.dove ? doveAnim(after + 0.5) : ''}
+      ${m.victims.map((v, i) => `<div class="kflash" style="--d:${0.8 + i * 2.6}s"></div>`).join('')}`;
+    else if (m.saved || m.dove) body = `<div class="title rise">Nikt nie zginął!</div><div class="victims">${m.saved ? saveAnim(0.6) : ''}</div>${m.dove ? doveAnim(m.saved ? 2.2 : 0.6) : ''}
+      <p class="big-p late2">Mafia zaatakowała, ale ofiara ${m.dove && !m.saved ? 'przeżyła dzięki karcie' : 'została uratowana'}.</p>`;
     else body = `<div class="big-emoji pop">🌤️</div><div class="title">Spokojna noc</div><p class="big-p">Tej nocy nikt nie zginął.</p>`;
     return `<div class="scene center morning">
       <div class="sun"></div>
@@ -178,10 +193,11 @@ T.reg('ma-morning', {
   mount: () => {
     const m = S().morning || { victims: [] };
     SFX('morning');
+    m.victims.forEach((v, i) => { SFX('stamp', 0.8 + i * 2.6 + 0.35); SFX('death', 0.8 + i * 2.6 + 1.0); });
+    if (m.saved) { const d = m.victims.length ? 0.8 + m.victims.length * 2.6 : 0.6; SFX('whoosh', d); SFX('tock', d + 0.6); SFX('saved', d + 0.8); }
     if (m.victims.length) {
-      SFX('death', 1.2);
       say('Miasto się budzi. ' + m.victims.map(v => `Tej nocy zginęła osoba: ${nm(v.id)}.${v.role ? ' Jej rola: ' + ROLES[v.role].name + '.' : ''}`).join(' ') + ' ' + (m.notes || []).map(plain).join(' '));
-    } else if (m.saved || m.dove) { SFX('saved', 1); say('Miasto się budzi. Mafia zaatakowała, ale ofiara została uratowana. Nikt nie zginął!'); }
+    } else if (m.saved || m.dove) { say('Miasto się budzi. Mafia zaatakowała, ale ofiara została uratowana. Nikt nie zginął!'); }
     else say('Miasto się budzi. Tej nocy nikt nie zginął.');
   },
 });
@@ -237,18 +253,18 @@ T.reg('ma-elim', {
   html: () => {
     const s = S(), e = s.elim || {}, p = e.out && P(e.out);
     let body;
-    if (p) body = `<div class="kicker">Miasto zdecydowało</div>${av(p, 'huge')}<div class="name-big" style="color:${p.color}">${esc(p.name)}</div><div class="late">${e.role ? `<div class="stamp ${e.role === 'mafia' ? 'yes' : 'no'}">${e.role === 'mafia' ? 'BYŁ(A) W MAFII!' : ROLES[e.role].emoji + ' ' + ROLES[e.role].name.toUpperCase()}</div>` : '<div class="mrole">❔ rola ukryta</div>'}</div>`;
+    if (p) body = `<div class="kicker">Miasto zdecydowało</div><div class="eject">${av(p, 'huge')}<i class="door">🚪</i></div><div class="name-big" style="color:${p.color}">${esc(p.name)}</div><div class="late">${e.role ? `<div class="stamp ${e.role === 'mafia' ? 'yes' : 'no'}">${e.role === 'mafia' ? 'BYŁ(A) W MAFII!' : ROLES[e.role].emoji + ' ' + ROLES[e.role].name.toUpperCase()}</div>` : '<div class="mrole">❔ rola ukryta</div>'}</div>`;
     else body = `<div class="big-emoji pop">${e.tie ? '⚖️' : '🤷'}</div><div class="title">${e.tie ? 'Remis' : 'Nikt nie odpada'}</div><p class="big-p">${e.tie ? 'Nikt nie odpada.' : ''}</p>`;
     const b = e.bomb && P(e.bomb);
-    return `<div class="scene center elim">
+    return `<div class="scene center elim ${b ? 'bombed' : ''}">
       ${body}
-      ${b ? `<div class="bombline late2">💣 Razem z nim/nią ginie: ${av(b, 'sm')} <b>${esc(b.name)}</b> ${e.bombRole ? roleTag(e.bombRole) : ''}</div>` : ''}
+      ${b ? `<div class="boom">💥</div><div class="bombflash"></div><div class="bombline late3">💣 Razem z nim/nią ginie: ${av(b, 'sm')} <b>${esc(b.name)}</b> ${e.bombRole ? roleTag(e.bombRole) : ''}</div>` : ''}
       ${(e.notes || []).map(n => `<div class="mnote late2">${esc(n)}</div>`).join('')}
       ${MULTI() ? btn('toNight', '', 'Dalej ⏭', 'ghost sm', 'data-focus') : '<div class="footer"><span class="pulse">Host: dalej na telefonie</span></div>'}</div>`;
   },
   mount: () => {
     const e = S().elim || {};
-    if (e.out) { SFX('drum'); SFX(e.role === 'mafia' ? 'fanfare' : 'death', 2.6); say(`Miasto zdecydowało. Odpada: ${nm(e.out)}.${e.role ? ' Jej rola: ' + ROLES[e.role].name + '.' : ''} ${(e.notes || []).map(plain).join(' ')}`); }
+    if (e.out) { SFX('drum'); SFX(e.role === 'mafia' ? 'fanfare' : 'death', 2.6); SFX('whoosh', 4.0); SFX('stamp', 4.5); if (e.bomb) { SFX('drum', 5.0); SFX('death', 5.2); } say(`Miasto zdecydowało. Odpada: ${nm(e.out)}.${e.role ? ' Jej rola: ' + ROLES[e.role].name + '.' : ''} ${(e.notes || []).map(plain).join(' ')}`); }
     else { SFX('blip'); say((e.tie ? 'Remis. ' : '') + 'Nikt nie odpada. ' + (e.notes || []).map(plain).join(' ')); }
   },
 });
@@ -280,5 +296,35 @@ T.onDraw = (s, scene) => {
     if (lastFeed && (scene === 'ma-day' || scene === 'ma-vote')) { say(plain(newest.text), { queue: true }); SFX('pop'); }
     lastFeed = newest.at;
   }
+};
+})();
+
+/* ---------------- pokaz animacji (strona testowa) ---------------- */
+(() => {
+const T = window.TV;
+T.demo = kind => {
+  if (window.MafiaGame && MafiaGame.active) MafiaGame.deactivate();
+  T.game = 'mafia'; T.mode = 'multi';
+  const em = ['🐱', '🦊', '🐸', '🦁', '🐷', '🐙'], cols = ['#ff4d6d', '#4dabf7', '#51cf66', '#fcc419', '#cc5de8', '#ff922b'];
+  const pl = ['Ania', 'Bartek', 'Celina', 'Darek', 'Ewa', 'Franek'].map((n, i) => ({ id: 'd' + i, name: n, color: cols[i], emoji: em[i], score: i, delta: 0, online: true, alive: true, cards: i % 3 }));
+  const base = { game: 'mafia', mode: 'multi', games: Date.now() % 100000, day: 2, players: pl, ids: pl.map(p => p.id), dead: {}, settings: { voice: true }, cardsOn: true, feed: [] };
+  const morning = (o) => Object.assign({}, base, { phase: 'morning', morning: Object.assign({ day: 2, victims: [], saved: false, dove: false, notes: [] }, o) });
+  const st = {
+    kill: () => { pl[2].alive = false; return morning({ victims: [{ id: 'd2', role: 'citizen' }] }); },
+    kill2: () => { pl[2].alive = pl[4].alive = false; return morning({ victims: [{ id: 'd2', role: 'cop' }, { id: 'd4', role: 'mafia', revenge: true }], notes: ['👊 Zemsta zza grobu! Ginie też Ewa.'] }); },
+    poison: () => { pl[3].alive = false; return morning({ victims: [{ id: 'd3', role: 'doctor', poison: true }] }); },
+    save: () => morning({ saved: true }),
+    dove: () => morning({ dove: true }),
+    killsave: () => { pl[1].alive = false; return morning({ victims: [{ id: 'd1', role: 'citizen' }], saved: true, dove: true }); },
+    eject: () => { pl[0].alive = false; return Object.assign({}, base, { phase: 'elim', elim: { out: 'd0', role: 'mafia', notes: [] } }); },
+    eject2: () => { pl[5].alive = false; return Object.assign({}, base, { phase: 'elim', elim: { out: 'd5', role: 'citizen', notes: [] } }); },
+    bomb: () => { pl[0].alive = pl[3].alive = false; return Object.assign({}, base, { phase: 'elim', elim: { out: 'd0', role: 'citizen', bomb: 'd3', bombRole: 'mafia', notes: ['💣 BOMBA! Ania zabiera ze sobą: Darek!'] } }); },
+    night: () => Object.assign({}, base, { phase: 'night', nightDone: 2, nightTotal: 6, timer: { total: 60, left: 48000, running: true } }),
+    day: () => Object.assign({}, base, { phase: 'day', timer: { total: 180, left: 140000, running: true }, feed: [{ text: '📰 Gazeta: w mieście żyje 1 mafioso.', at: Date.now() }] }),
+    townwin: () => Object.assign({}, base, { phase: 'end', winner: 'town', roles: { d0: 'mafia', d1: 'citizen', d2: 'cop', d3: 'doctor', d4: 'citizen', d5: 'citizen' } }),
+    mafiawin: () => Object.assign({}, base, { phase: 'end', winner: 'mafia', roles: { d0: 'mafia', d1: 'citizen', d2: 'cop', d3: 'doctor', d4: 'mafia', d5: 'citizen' } }),
+  }[kind];
+  if (!st) return;
+  T.local(st());
 };
 })();

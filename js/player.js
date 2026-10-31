@@ -46,6 +46,8 @@ function sendTV(m) {
   if (LOCAL && T.bc) { T.bc.postMessage({ from: ME.pid, m }); return; }
   if (T.conn && T.conn.open) { try { T.conn.send(m); } catch (e) {} }
 }
+// pokaz animacji ze strony testowej: wstrzyknięcie stanu telefonu
+window.__playerDemo = st => { want = true; onData(st); };
 function onData(m) {
   if (!m) return;
   if (m.type === 'p') { P = m; recvAt = performance.now(); errMsg = ''; setStatus(''); render(); return; }
