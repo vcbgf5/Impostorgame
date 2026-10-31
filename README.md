@@ -40,6 +40,10 @@ Około 6000 słów w 26 kategoriach. Każdy plik to jedna kategoria. Nazwa podgr
 ```
 Nowa kategoria: dodaj plik i wpisz go do `words/index.json`. Słowa w rundach się nie powtarzają, dopóki pula się nie wyczerpie (pamięta to telefon).
 
+## Telewizor z przeglądarką (bez laptopa)
+Na telewizorze otwórz przeglądarkę i wpisz **`vcbgf5.github.io/impostorgame/tv`** (albo sam adres główny i kliknij „📺 To jest telewizor”). Na ekranie pojawi się kod i QR. Telefon hosta skanuje QR i gotowe.
+Uwaga: przeglądarka telewizora musi obsługiwać WebRTC. Nowsze telewizory z Androidem/Google TV (Chrome), LG webOS i Samsung Tizen zwykle obsługują. Jeśli kod stoi na „łączenie…”, użyj laptopa albo przystawki z Chrome.
+
 ## Uruchomienie na GitHub Pages
 1. Wrzuć cały folder do repozytorium na GitHubie.
 2. *Settings → Pages → Deploy from branch → `main` / root*.

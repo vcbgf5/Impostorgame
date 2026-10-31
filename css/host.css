@@ -117,3 +117,6 @@ input:focus{border-color:var(--pri)}
 .opt{display:flex;align-items:center;justify-content:center;gap:4px;min-height:46px;border:1px solid var(--line);background:var(--card);border-radius:12px;padding:6px 8px;font-weight:700;font-size:14px;cursor:pointer}
 .opt.on{background:var(--pri);border-color:var(--pri)}
 .av.xs{width:20px;height:20px;font-size:10px;box-shadow:none}
+.tvlink{display:block;text-align:center;text-decoration:none;color:#fff;margin:0 0 6px}
+.tvlink:focus{outline:4px solid #fff;outline-offset:3px}
+.cen-t{text-align:center;margin:0 0 14px}

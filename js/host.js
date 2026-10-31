@@ -238,7 +238,10 @@ function vSetup() {
   if (DB.status === 'loading') return '<div class="loading">Ładowanie słów…</div>';
   const st = S.settings, n = S.players.length;
   const pool = selCats().reduce((s, c) => s + c.items.length, 0);
+  const bigScreen = !matchMedia('(pointer: coarse)').matches && window.innerWidth >= 900;
   return `
+  ${bigScreen ? `<a class="btn big primary tvlink" href="tv.html">📺 To jest telewizor — otwórz ekran gry</a>
+    <p class="muted small cen-t">Na telefonie hosta wejdź na ten sam adres i zeskanuj kod QR z telewizora.</p>` : ''}
   ${DB.status === 'error' ? `<div class="card err">⚠️ Nie udało się wczytać słów (${esc(DB.error)}). Uruchom grę przez serwer/GitHub Pages, a nie jako plik.</div>` : ''}
   <section class="card">
     <h2>👥 Gracze <span class="badge">${n}</span></h2>
