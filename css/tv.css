@@ -313,3 +313,56 @@ body.nocur{cursor:none}
 .pod.p3 .block{height:6rem;background:linear-gradient(180deg,#cd7f3288,#cd7f3222)}
 .crown{font-size:4rem;animation:float 2s ease-in-out infinite,bounceIn .8s 1.6s both}
 .fakeline{font-size:1.7rem;color:var(--warn);animation:rise .6s .5s both}.fakeline b{color:#fff}
+
+/* ================= MAFIA ================= */
+.mafia-card:focus{background:linear-gradient(145deg,#1b2a6b,#0b0d2a)}
+.logo-mid.maf,.logo-big.maf{background:linear-gradient(90deg,#ff2d4a,#ff8a3d,#ff2d4a);background-size:200%;-webkit-background-clip:text;background-clip:text}
+.mafia-bg::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 80% 0%,#2a0d1aaa,transparent 55%);pointer-events:none}
+.mwarn{grid-column:1/-1;color:var(--warn);font-size:1rem}
+/* noc */
+.night{background:radial-gradient(ellipse at 50% 120%,#0d1b3d 0%,#03040f 70%);overflow:hidden}
+.night .stars i{position:absolute;width:.25rem;height:.25rem;border-radius:50%;background:#fff;opacity:.2;animation:twinkle 3s ease-in-out infinite}
+.moon{position:absolute;top:3rem;right:9rem;width:9rem;height:9rem;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fffbe6,#e8dca8 60%,#c9bb82);box-shadow:0 0 6rem #fff6c855,0 0 2rem #fff6c8;animation:float 6s ease-in-out infinite}
+.moon::after{content:'';position:absolute;width:2rem;height:2rem;border-radius:50%;background:#d6c993;top:2.5rem;left:4.5rem;opacity:.6;box-shadow:-2.5rem 3rem 0 -.4rem #d6c993}
+.night-t{color:#dfe6ff;text-shadow:0 0 2rem #6c8cff88}
+.night .big-p{color:#b9c3ec}
+.nightprog{font-size:1.3rem;color:#9aa6d6}
+@keyframes twinkle{50%{opacity:1;transform:scale(1.4)}}
+/* poranek */
+.morning{background:linear-gradient(180deg,#1a1440 0%,#4a2350 45%,#c2554a 85%,#f0a35a 100%);overflow:hidden}
+.sun{position:absolute;bottom:-14rem;left:50%;width:26rem;height:26rem;margin-left:-13rem;border-radius:50%;background:radial-gradient(circle,#fff3c4,#ffc35a 55%,#ff8a3d);box-shadow:0 0 8rem #ffb34d;animation:sunrise 3s ease-out both}
+@keyframes sunrise{from{transform:translateY(10rem)}to{transform:none}}
+.morning>*:not(.sun){position:relative;z-index:1}
+.victims{display:flex;gap:2.5rem;justify-content:center}
+.victim{display:flex;flex-direction:column;align-items:center;gap:.4rem;animation:revealIn .8s both}
+.victim b{font-size:2.4rem}.victim small{font-size:1.1rem;color:#d7f7c8}
+.victim .av{filter:grayscale(.6);box-shadow:0 0 0 .4rem #0006,0 0 3rem #000}
+.mrole{display:inline-block;font-size:1.4rem;font-weight:800;padding:.35rem 1rem;border-radius:99rem;background:#ffffff18;border:2px solid #ffffff33}
+.mrole.r-mafia{background:#ff2d4a33;border-color:var(--red)}
+.mrole.r-cop{background:#4dabf733;border-color:#4dabf7}.mrole.r-doctor{background:#2ee59d33;border-color:var(--ok)}
+.mnote{font-size:1.5rem;font-weight:700;color:var(--warn);background:#0006;padding:.5rem 1.4rem;border-radius:1rem;animation:rise .6s 1.5s both}
+/* dzień */
+.dayscene{background:radial-gradient(circle at 50% -20%,#4a3a1a,transparent 60%)}
+.mplist{display:flex;flex-wrap:wrap;gap:.6rem;justify-content:center;max-width:92%}
+.mplist.ghosts{opacity:.7}
+.mp{position:relative;display:flex;flex-direction:column;align-items:center;gap:.25rem;padding:.4rem .7rem;border-radius:1rem;background:#ffffff0c;font-size:1.05rem;font-weight:700;min-width:6.5rem}
+.mp.dead .av{filter:grayscale(1);opacity:.5}.mp.dead span{text-decoration:line-through;opacity:.6}
+.mp i{position:absolute;top:.1rem;right:.3rem;font-style:normal}
+.mp small{font-size:.8rem;color:var(--mut)}
+.cardn{position:absolute;top:-.4rem;left:-.3rem;font-size:.8rem;background:#7a2cff;border-radius:99rem;padding:.05rem .4rem}
+.spot{font-size:2rem;color:var(--warn);animation:pulse 1.4s infinite}
+.mfeed{position:absolute;left:2rem;bottom:1.6rem;display:flex;flex-direction:column-reverse;gap:.3rem;max-width:45%;font-size:1.15rem;font-weight:700}
+.mfeed div{background:#000a;border-left:.3rem solid var(--warn);padding:.35rem .8rem;border-radius:.4rem;animation:slideIn .5s both}
+.secretbox{font-size:2rem;text-align:center;color:var(--mut);padding:3rem;border:2px dashed #ffffff33;border-radius:1.5rem}
+/* wyrok i koniec */
+.elim{gap:.8rem}
+.bombline{font-size:1.7rem;font-weight:800;color:var(--red);display:flex;align-items:center;gap:.6rem}
+.mend.town{background:radial-gradient(circle at 50% 0%,#1d5a3a,transparent 60%)}
+.mend.maf{background:radial-gradient(circle at 50% 0%,#5a1020,transparent 60%)}
+.rolegrid{display:flex;flex-wrap:wrap;gap:.8rem;justify-content:center;max-width:94%}
+.rcard{display:flex;flex-direction:column;align-items:center;gap:.25rem;width:9.5rem;padding:.8rem .4rem;border-radius:1.2rem;background:var(--panel);border:2px solid var(--line);animation:bounceIn .6s both;position:relative}
+.rcard b{font-size:1.25rem}.rcard span{font-size:1rem;color:#d7d3f5}
+.rcard i{position:absolute;top:.3rem;right:.5rem;font-style:normal;color:var(--ok);font-weight:900}
+.rcard.r-mafia{border-color:var(--red);background:linear-gradient(180deg,#ff2d4a33,var(--panel))}
+.rcard.r-cop{border-color:#4dabf7}.rcard.r-doctor{border-color:var(--ok)}
+.rcard.dead{opacity:.6}.rcard.dead .av{filter:grayscale(1)}

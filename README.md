@@ -1,8 +1,33 @@
-# 🕵️ Impostor – gra imprezowa na jeden telefon + telewizor
+# 🎉 Gry imprezowe na telewizor: Impostor i Mafia
 
-Jeden telefon (host) krąży między graczami, a laptop podłączony do telewizora pokazuje lobby, instrukcje, czyja jest kolej, odliczanie, głosowanie, wyniki i animacje.
+Telewizor pokazuje grę (lobby, instrukcje, odliczanie, głosowania, wyniki, animacje, muzykę), a gracze używają telefonów.
+Na starcie telewizora wybierasz **grę** (🕵️ Impostor albo 🌙 Mafia), a potem **tryb**: 📱 jeden telefon krążący między graczami albo 👥 każdy swój telefon.
 
-## Dwa tryby (wybierasz na telewizorze pilotem: strzałki + OK)
+## 🌙 Mafia
+Miasto kontra mafia. Telewizor jest narratorem i czyta komunikaty na głos po polsku (synteza mowy przeglądarki; bez polskiego głosu zostają napisy).
+- **Role:** 🕴️ Mafia (w nocy wspólnie wybiera ofiarę, mafiozi znają się nawzajem), 🕵️ Policjant (sprawdza, czy ktoś jest w mafii), 🩺 Lekarz (ratuje jedną osobę, nie tę samą dwie noce z rzędu), 🙂 Obywatele.
+- **Noc:** każdy coś klika, obywatele wskazują podejrzanego, żeby nikt nie zgadł ról po zachowaniu.
+- **Rano:** telewizor ogłasza ofiarę (i jej rolę, jeśli to włączone) albo że lekarz kogoś uratował.
+- **Dzień i głosowanie:** dyskusja z odliczaniem, potem głosowanie żywych (można „Pominąć”). Remis = nikt nie odpada.
+- **Wygrana:** miasto, gdy usunie całą mafię; mafia, gdy jest jej tyle, co reszty żywych. Zwycięska drużyna +2 pkt, żywi zwycięzcy +1.
+- **Tryb jednego telefonu:** `mafia.html` na telefonie hosta. W nocy telewizor woła po kolei każdego gracza do telefonu.
+- **Tryb „każdy swój telefon”:** wszystko odbywa się na telefonach, a ustawienia robisz pilotem na TV.
+
+### 🃏 Karty mocy (tryb „każdy swój telefon”)
+- **100 różnych kart**: 22 dla mafii, 27 dla miasta i 51 dla każdego.
+- **Telewizor rozdaje je losowo co rano** (ustawienie „Karty co rano”: 1–3 osoby albo wyłączone). Każdy dostaje karty pasujące do swojej drużyny. W ręce można mieć maksymalnie 3 karty.
+- **Duchy** (zabici gracze) co rano dostają **2 losowe karty** i mogą je przekazać żywym graczom.
+- **Rodzaje:**
+  - nocne (tajne): ochrona, śledztwa, podsłuch, blokady, zmyłki, dodatkowe ataki, trucizna;
+  - dzienne (jawne, telewizor je ogłasza): czas, gazeta, kula, kradzież, wymiana;
+  - na głosowanie: podwójny głos, knebel, weto, immunitet, magnes, odwrócenie;
+  - pasywne: działają same, gdy leżą w ręce (druga szansa, bomba, zemsta, tarcza).
+- W jednej fazie można zagrać jedną kartę. Wyniki nocnych śledztw przychodzą rano, tylko do ciebie.
+
+---
+
+
+## 🕵️ Impostor – dwa tryby (wybierasz na telewizorze pilotem: strzałki + OK)
 - **📱 Jeden telefon**: host ma telefon, który krąży między graczami (opis poniżej).
 - **👥 Każdy swój telefon**: telewizor prowadzi grę. Gracze skanują QR z TV (albo wchodzą na `…/play` i wpisują kod), podają imię i dołączają. Każdy widzi swoje słowo u siebie i klika „Widziałem”. Głosuje na swoim telefonie, a impostor wybiera słowo z 10 też u siebie. Kategorie, zasady, start, następną rundę i usuwanie graczy robisz **pilotem na telewizorze**. Telewizor sam przechodzi dalej, gdy wszyscy zagłosują albo skończy się czas.
 

@@ -339,10 +339,10 @@ setInterval(render, 3000);
 
 window.TVGame = {
   get active() { return G.active; },
-  activate() { G.active = true; loadWords(); render(); },
+  activate() { G.active = true; loadWords(); render(); Object.values(G.conns).forEach(c => send(c, { type: 'rejoin' })); },
   deactivate() {
     G.active = false; cancelLater(); G.timer = null;
-    Object.values(G.conns).forEach(c => { send(c, { type: 'err', text: 'Telewizor przełączył się na tryb jednego telefonu.' }); });
+    // telefony dostaną od telewizora prośbę o ponowne dołączenie (tv.html) – trafią do aktywnej gry
   },
   action(act, arg) { if (G.active && ACT[act]) ACT[act](arg); },
   onPlayerMsg, onClose,

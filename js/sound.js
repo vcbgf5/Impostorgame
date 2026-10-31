@@ -23,14 +23,15 @@ const ready = () => !!(ensure() && ctx.state === 'running');
 
 /* ---------- pliki mp3 ---------- */
 const FILES = ['pop', 'join', 'join1', 'join2', 'join3', 'ding', 'tick', 'tock', 'blip', 'whoosh', 'drumroll', 'stamp', 'fanfare', 'win', 'wah',
-  'clown', 'reveal', 'react', 'buzzer', 'start', 'impostor', 'count', 'troll', 'music_menu'];
+  'clown', 'reveal', 'react', 'buzzer', 'start', 'impostor', 'count', 'troll', 'music_menu',
+  'night', 'morning', 'death', 'saved', 'town_win', 'mafia_win'];
 // pozostała muzyka ładuje się dopiero, gdy jest potrzebna
-const MUSIC = ['lobby', 'tension', 'menu', 'double', 'blitz', 'vote', 'victory'];
+const MUSIC = ['lobby', 'tension', 'menu', 'double', 'blitz', 'vote', 'victory', 'night', 'day'];
 const ALIAS = { drum: 'drumroll' };
 const VARIANTS = { join: ['join1', 'join2', 'join3'] };
 // losowa wysokość, żeby powtarzające się efekty nie brzmiały identycznie
 const PITCH = { pop: 0.08, join1: 0.04, join2: 0.04, join3: 0.04, join: 0.05, ding: 0.06, blip: 0.1, tick: 0.05, tock: 0.05, whoosh: 0.12, stamp: 0.06, react: 0.3, count: 0.03 };
-const VOL = { music_lobby: 0.55, music_tension: 0.4, music_menu: 0.5, music_double: 0.5, music_blitz: 0.48, music_vote: 0.45, music_victory: 0.55, tick: 0.6, react: 0.55, whoosh: 0.7, buzzer: 0.6 };
+const VOL = { music_lobby: 0.55, music_tension: 0.4, music_menu: 0.5, music_double: 0.5, music_blitz: 0.48, music_vote: 0.45, music_victory: 0.55, music_night: 0.6, music_day: 0.5, tick: 0.6, react: 0.55, whoosh: 0.7, buzzer: 0.6 };
 const BUF = {};
 function decode(ab) {
   return new Promise((res, rej) => { try { const p = ctx.decodeAudioData(ab, res, rej); if (p && p.then) p.then(res, rej); } catch (e) { rej(e); } });
@@ -197,6 +198,13 @@ window.Sfx = {
   },
   get muted() { return muted; },
   get loaded() { return Object.keys(BUF); },
+  // przyciszenie muzyki, gdy mówi narrator
+  duck(on) {
+    if (!ctx) return;
+    const t = ctx.currentTime;
+    if (musicSrcGain) { const v = (VOL['music_' + musicWanted] || 0.5) * (on ? 0.3 : 1); musicSrcGain.gain.cancelScheduledValues(t); musicSrcGain.gain.setValueAtTime(musicSrcGain.gain.value, t); musicSrcGain.gain.linearRampToValueAtTime(v, t + 0.3); }
+    if (musicGain && musicT) { musicGain.gain.cancelScheduledValues(t); musicGain.gain.setValueAtTime(musicGain.gain.value, t); musicGain.gain.linearRampToValueAtTime(on ? 0.15 : 0.5, t + 0.3); }
+  },
   get locked() { return !ctx || ctx.state !== 'running'; },
   onChange(fn) { listeners.push(fn); },
 };

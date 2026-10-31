@@ -763,9 +763,98 @@ def fx_troll():
     save('troll', reverb(buf, 0.8, 0.18))
 
 
+# ---------------------------------------------------------------- MAFIA
+def music_night():
+    # mroczny ambient nocy: dron, bicie serca, dzwonki, wiatr – 72 BPM
+    bpm = 72; beat = 60 / bpm; bars = 12; L = bars * 4 * beat
+    n = int((L + 3) * SR)
+    pd = np.zeros(n); fx = np.zeros(n); dr = np.zeros(n)
+    prog = [[50, 53, 57], [46, 50, 53], [48, 52, 55], [45, 49, 52]]  # Dm Bb C A
+    for b in range(bars):
+        ch = prog[b % 4]; t0 = b * 4 * beat
+        place(pd, pad([m for m in ch], 4 * beat + 1.0, 0.9), t0)
+        place(dr, bass(ch[0] - 12, 2 * beat, 0.5), t0)
+        for k in (0, 2):  # bicie serca
+            place(dr, kick(0.45), t0 + k * beat); place(dr, kick(0.3), t0 + k * beat + 0.22)
+        if b % 2 == 1:
+            for i, m in enumerate((74, 77, 81)):
+                place(fx, bell(m, 2.0, 0.18), t0 + 2 * beat + i * 0.4)
+    wind = sweep_filter(noise(n), 300, 900, q=0.8) * (0.5 + 0.5 * np.sin(np.linspace(0, 6 * np.pi, n))) * 0.12
+    buf = reverb(pd, 2.5, 0.45)[:n] * 0.9 + dr * 0.7 + reverb(fx, 2.5, 0.5)[:n] + wind
+    save('music_night', fold_loop(buf, L), br='128k', trim=False, peak=0.7)
+
+
+def music_day():
+    song('music_day', 108, ['D', 'A', 'Bm', 'G'],
+         'F#5 . A5 . B5 A5 F#5 . | E5 . A5 . C#6 - B5 . | D5 . F#5 . B5 A5 F#5 D5 | E5 - - . G5 F#5 E5 .',
+         'chill', lead='pluck', mel2='D6 . . . . . . . | C#6 . . . . . . . | B5 . . . . . . . | B5 . . . A5 . . .',
+         lead2='bell', reps=4, keys='epiano', vol=0.74)
+
+
+def fx_night():
+    # zasypianie: gong + sowa
+    buf = np.zeros(int(3.5 * SR))
+    place(buf, mix(bell(38, 3.0, 0.9), bell(50, 2.5, 0.4)), 0)
+    for at in (1.3, 1.75):  # „hu-hu”
+        n = int(0.35 * SR); tt = np.arange(n) / SR
+        place(buf, np.sin(phase(420 - 60 * tt / 0.35, n)) * np.sin(np.pi * tt / 0.35) ** 2 * 0.35, at)
+    save('night', reverb(buf, 2.2, 0.4))
+
+
+def fx_morning():
+    # świt: jasne arpeggio + ptaki
+    buf = np.zeros(int(3.0 * SR))
+    for i, m in enumerate((62, 66, 69, 74, 78, 81)):
+        place(buf, mix(bell(m + 12, 1.4, 0.35), pluck(m, 0.5, 0.3, 2)), i * 0.09)
+    for k in range(6):
+        n = int(0.09 * SR); tt = np.arange(n) / SR
+        f0 = 2800 + 900 * np.random.rand()
+        place(buf, np.sin(phase(f0 + 1600 * np.sin(np.pi * tt / 0.09), n)) * np.hanning(n) * 0.18, 0.9 + k * 0.17 + 0.05 * np.random.rand())
+    save('morning', reverb(buf, 1.4, 0.3))
+
+
+def fx_death():
+    buf = np.zeros(int(3.0 * SR))
+    place(buf, mix(kick(1.4), brass(38, 1.6, 0.5, slide_to=36), bass(26, 1.2, 0.8)), 0)
+    place(buf, pad([49, 52, 55], 2.2, 0.7), 0.05)  # akord zmniejszony
+    place(buf, crash(0.12, 1.8), 0)
+    save('death', reverb(buf, 2.0, 0.35))
+
+
+def fx_saved():
+    buf = np.zeros(int(3.0 * SR))
+    place(buf, pad([62, 66, 69, 74], 2.6, 1.0), 0)
+    for i, m in enumerate((86, 90, 93)):
+        place(buf, bell(m, 1.6, 0.3), 0.2 + i * 0.15)
+    save('saved', reverb(buf, 2.2, 0.45))
+
+
+def fx_town_win():
+    buf = np.zeros(int(4.5 * SR))
+    seq = [(62, 0.0, 0.18), (66, 0.2, 0.18), (69, 0.4, 0.18), (74, 0.6, 1.2), (71, 1.9, 0.25), (74, 2.15, 1.6)]
+    for m, at, d in seq:
+        place(buf, mix(brass(m + 12, d, 0.45, vib=0.005), brass(m, d, 0.25)), at)
+    for m in (62, 66, 69):
+        place(buf, brass(m, 1.6, 0.22, vib=0.006), 2.15)
+    place(buf, mix(kick(1.1), crash(0.3, 2.0)), 0.6); place(buf, mix(kick(1.1), crash(0.35, 2.2)), 2.15)
+    save('town_win', reverb(buf, 1.6, 0.28))
+
+
+def fx_mafia_win():
+    buf = np.zeros(int(4.5 * SR))
+    seq = [(50, 0.0, 0.3), (50, 0.35, 0.3), (53, 0.7, 0.3), (49, 1.1, 0.5), (50, 1.7, 2.0)]
+    for m, at, d in seq:
+        place(buf, mix(brass(m + 12, d, 0.5, vib=0.01), brass(m, d, 0.35), bass(m - 12, d, 0.6)), at)
+        place(buf, kick(1.2), at)
+    place(buf, pad([50, 53, 57, 61], 2.2, 0.6), 1.7)
+    place(buf, crash(0.15, 2.0), 1.7)
+    save('mafia_win', reverb(buf, 2.0, 0.35))
+
+
 if __name__ == '__main__':
     for fn in (fx_pop, fx_join, fx_ding, fx_tick, fx_tock, fx_blip, fx_whoosh, fx_drumroll, fx_stamp,
                fx_fanfare, fx_win, fx_wah, fx_clown, fx_reveal, fx_react, fx_buzzer, fx_start,
                fx_join_variants, fx_impostor, fx_count, fx_troll,
-               music_lobby, music_tension, music_menu, music_double, music_blitz, music_vote, music_victory):
+               music_lobby, music_tension, music_menu, music_double, music_blitz, music_vote, music_victory,
+               fx_night, fx_morning, fx_death, fx_saved, fx_town_win, fx_mafia_win, music_night, music_day):
         fn()

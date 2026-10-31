@@ -17,17 +17,30 @@ const TV = window.TV = {
   setCode(code, net) {
     const changed = code !== CODE;
     CODE = code; NET = net;
-    if (changed && (scene === 'wait' || scene === 'lobby' || scene === 'mlobby')) { fullKey = ''; draw(); }
+    if (changed && ['wait', 'lobby', 'mlobby', 'ma-mlobby', 'ma-lobby'].includes(scene)) { fullKey = ''; draw(); }
     stage.querySelectorAll('.tv-code').forEach(el => { el.textContent = CODE; });
     stage.querySelectorAll('.tv-net').forEach(el => { el.textContent = netTxt(); el.className = 'tv-net ' + NET; });
   },
   mode: null,
+  game: null,
+  /** stan od telefonu hosta (tryb jednego telefonu). Zwraca false, gdy TV jest w innej grze/trybie. */
   onMessage(m) {
     if (typeof m === 'string') { try { m = JSON.parse(m); } catch (e) { return; } }
     if (!m || m.type !== 'state' || !m.state) return;
-    if (TV.mode === 'multi') return;
+    const g = m.state.game || 'impostor';
+    if (TV.mode === 'multi') return false;
+    if (TV.game && TV.game !== g && TV.mode === 'single') return false;
+    if (TV.game !== g) { TV.game = g; saveGame(g); }
     if (TV.mode !== 'single') TV.setMode('single', true);
     S = m.state; recvAt = performance.now(); draw();
+    return true;
+  },
+  setGame(g) {
+    TV.game = g || null;
+    if (g) saveGame(g);
+    TV.mode = null; S = null; fullKey = '';
+    [window.TVGame, window.MafiaGame].forEach(x => { if (x && x.active) x.deactivate(); });
+    draw();
   },
   react(p, e) {
     const el = document.createElement('div'); el.className = 'react';
@@ -43,10 +56,16 @@ const TV = window.TV = {
     if (m) { try { localStorage.setItem('imp_tv_mode', m); } catch (e) {} }
     if (!keepState) S = null;
     fullKey = '';
-    if (window.TVGame) { if (m === 'multi') TVGame.activate(); else if (TVGame.active) TVGame.deactivate(); }
+    const want = m === 'multi' ? (TV.game === 'mafia' ? window.MafiaGame : window.TVGame) : null;
+    [window.TVGame, window.MafiaGame].forEach(x => { if (x && x !== want && x.active) x.deactivate(); });
+    if (want) { want.activate(); if (TV.rejoinAll) setTimeout(TV.rejoinAll, 50); }
     draw();
   },
 };
+const saveGame = g => { try { localStorage.setItem('imp_tv_game', g); } catch (e) {} };
+const lastGame = () => { try { return localStorage.getItem('imp_tv_game') || 'impostor'; } catch (e) { return 'impostor'; } };
+const GAMES = { impostor: { name: 'IMPOSTOR', emoji: '🕵️' }, mafia: { name: 'MAFIA', emoji: '🌙' } };
+const gameName = () => (GAMES[TV.game] || GAMES.impostor).name;
 const lastMode = () => { try { return localStorage.getItem('imp_tv_mode') || 'single'; } catch (e) { return 'single'; } };
 const MULTI = () => S && S.mode === 'multi';
 const btn = (act, arg, html, cls = '', extra = '') => `<button class="tvbtn ${cls}" data-act="${act}" data-arg="${esc(arg)}" ${extra}>${html}</button>`;
@@ -56,7 +75,7 @@ function hello() { senders.forEach(fn => { try { fn({ type: 'hello' }); } catch 
 setInterval(hello, 4000);
 
 const netTxt = () => ({ ready: 'gotowe do połączenia', connecting: 'łączenie z serwerem…', offline: 'brak internetu – ponawiam…' }[NET] || '');
-const joinUrl = () => { const u = new URL(TV.mode === 'multi' ? 'play.html' : 'index.html', location.href); u.searchParams.set('tv', CODE); return u.href; };
+const joinUrl = () => { const u = new URL(TV.mode === 'multi' ? 'play.html' : TV.game === 'mafia' ? 'mafia.html' : 'index.html', location.href); u.searchParams.set('tv', CODE); return u.href; };
 function drawQR() {
   const el = stage.querySelector('#qr'); if (!el || !CODE || !window.qrcode) return;
   try { const q = qrcode(0, 'M'); q.addData(joinUrl()); q.make(); el.innerHTML = q.createSvgTag({ cellSize: 8, margin: 0, scalable: true }); } catch (e) {}
@@ -97,12 +116,22 @@ const HOW = [
 const TIPS = ['Mów jedno skojarzenie — krótko!', 'Nie bądź zbyt oczywisty, impostor słucha 👂', 'Impostorze: udawaj pewność siebie 😎', 'Obserwujcie, kto się waha 🤔', 'Kto mówi za ogólnie? 🧐'];
 
 const SCENES = {
+  game: () => `<div class="scene center modesel gamesel">
+    <div class="logo-big glitch" data-t="GRY IMPREZOWE">GRY IMPREZOWE</div>
+    <p class="big-p">W co gramy?</p>
+    <div class="modes">
+      ${btn('game', 'impostor', '<div class="me">🕵️</div><b>Impostor</b><span>Wszyscy znają słowo… oprócz jednej osoby. Znajdźcie kłamcę!</span>', 'mode-card', lastGame() === 'impostor' ? 'data-focus' : '')}
+      ${btn('game', 'mafia', '<div class="me">🌙</div><b>Mafia</b><span>Noc, mafia, policjant i lekarz. Miasto kontra mafia.</span>', 'mode-card mafia-card', lastGame() === 'mafia' ? 'data-focus' : '')}
+    </div>
+    <p class="muted">🎮 Pilot: strzałki i OK</p></div>`,
+
   mode: () => `<div class="scene center modesel">
-    <div class="logo-big glitch" data-t="IMPOSTOR">IMPOSTOR</div>
+    ${btn('game', '', '← Zmień grę', 'ghost sm corner')}
+    <div class="logo-big glitch" data-t="${gameName()}">${gameName()}</div>
     <p class="big-p">Jak gracie?</p>
     <div class="modes">
       ${btn('mode', 'single', '<div class="me">📱</div><b>Jeden telefon</b><span>Host podaje jeden telefon kolejnym graczom</span>', 'mode-card', lastMode() === 'single' ? 'data-focus' : '')}
-      ${btn('mode', 'multi', '<div class="me">👥</div><b>Każdy swój telefon</b><span>Gracze dołączają kodem QR, ustawienia robisz pilotem na TV</span>', 'mode-card', lastMode() === 'multi' ? 'data-focus' : '')}
+      ${btn('mode', 'multi', `<div class="me">👥</div><b>Każdy swój telefon</b><span>Gracze dołączają kodem QR, ustawienia robisz pilotem na TV${TV.game === 'mafia' ? ' · karty mocy 🃏' : ''}</span>`, 'mode-card', lastMode() === 'multi' ? 'data-focus' : '')}
     </div>
     <p class="muted">🎮 Pilot: strzałki i OK</p></div>`,
 
@@ -131,7 +160,7 @@ const SCENES = {
   wait: () => `<div class="scene wait">
     ${btn('mode', '', '← Zmień tryb', 'ghost sm corner')}
     <div class="wait-l">
-      <div class="logo-big glitch" data-t="IMPOSTOR">IMPOSTOR</div>
+      <div class="logo-big glitch" data-t="${gameName()}">${gameName()}</div>
       <div class="spy">🕵️</div>
       <p class="big-p">Zeskanuj kod telefonem hosta</p>
       <p class="muted">albo otwórz grę na telefonie i wpisz kod:</p>
@@ -272,7 +301,7 @@ const SCENES = {
     }
     const max = Math.max(1, ...list.map(p => p.score));
     return `<div class="scene scores">
-      <div class="title">🏆 Tabela wyników</div><div class="kicker">po rundzie ${S.round}</div>
+      <div class="title">🏆 Tabela wyników</div><div class="kicker">${S.game === 'mafia' ? 'po partii ' + S.games : 'po rundzie ' + S.round}</div>
       <div class="board">${list.map((p, i) => `<div class="brow" style="animation-delay:${i * 90}ms">
         <div class="place">${i === 0 && p.score > 0 ? '👑' : i + 1}</div>${av(p, 'sm')}<div class="bn">${esc(p.name)}</div>
         <div class="track"><div class="fill" style="--c:${p.color};--w:${(p.score / max) * 100}%"></div></div>
@@ -388,8 +417,12 @@ const MOUNT = {
   vote() { SFX(MULTI() ? 'blip' : 'count'); },
 };
 
+// rozszerzenia (np. js/tv-mafia.js) rejestrują własne sceny i dostają pomocnicze funkcje
+TV.reg = (name, def) => { SCENES[name] = def.html; if (def.update) UPDATE[name] = def.update; if (def.mount) MOUNT[name] = def.mount; };
+TV.h = { esc, av, btn, ring, SFX, confetti: (n) => confetti(n), flash: () => flash(), P: id => P(id), get S() { return S; }, MULTI, drawQR, every, playShort, netTxt, code: () => CODE, net: () => NET, timerLeft: () => timerLeft() };
 function sceneKey() {
-  if (!S) return TV.mode === 'single' ? 'wait' : 'mode';
+  if (!S) return !TV.game ? 'game' : TV.mode === 'single' ? 'wait' : 'mode';
+  if (S.game === 'mafia') return S.phase === 'setup' ? (MULTI() ? 'ma-mlobby' : 'ma-lobby') : S.phase === 'scores' ? 'scores' : 'ma-' + S.phase;
   const R = S.R || {};
   switch (S.phase) {
     case 'setup': return MULTI() ? 'mlobby' : 'lobby';
@@ -402,7 +435,7 @@ let fullKey = '';
 function draw() {
   const k = sceneKey();
   const R = S && S.R;
-  const fk = k + (k === 'reveal' ? (R.peek || R.idx) + R.stage : '') + (S ? S.round : '');
+  const fk = k + (k === 'reveal' ? (R.peek || R.idx) + R.stage : '') + (S ? S.round : '') + (S && S.game === 'mafia' ? '|' + S.games + '|' + S.day + '|' + (S.pass ? S.pass.idx + S.pass.stage : '') : '');
   const fkey = focusKey();
   if (fk !== fullKey) {
     if (k === 'reveal' || k === 'mreveal') SFX(scene === 'reveal' || scene === 'mreveal' ? 'whoosh' : 'start');
@@ -416,6 +449,7 @@ function draw() {
   } else if (UPDATE[scene]) { UPDATE[scene](); restoreFocus(fkey); }
   showToast(S && S.msg);
   eventSounds();
+  if (TV.onDraw) TV.onDraw(S, scene);
 }
 // dźwięki zdarzeń: ktoś dołączył, ktoś zobaczył słowo, ktoś zagłosował / wybrał słowo
 let ev = { players: -1, seen: -1, votes: -1, picks: -1, round: -1 };
@@ -434,6 +468,8 @@ function eventSounds() {
 
 // muzyka zależna od ekranu i trybu gry
 function musicFor(k) {
+  if (k.startsWith('ma-') || (S && S.game === 'mafia' && k === 'scores')) return TV.mafiaMusic ? TV.mafiaMusic(k) : null;
+  if (k === 'game') return 'menu';
   const gm = S && S.settings && S.settings.gmode;
   if (k === 'mode' || k === 'wait' || k === 'reveal' || k === 'mreveal' || k === 'ready') return 'menu';
   if (k === 'lobby' || k === 'mlobby') return 'lobby';
@@ -481,14 +517,17 @@ document.addEventListener('keydown', e => {
   }
   if (k === 'Backspace' || k === 'Escape' || k === 'GoBack' || kc === 461 || kc === 10009 || kc === 8) {
     e.preventDefault();
-    if (scene === 'wait' || scene === 'mlobby') TV.setMode(null);
+    if (scene === 'wait' || scene === 'mlobby' || scene === 'ma-mlobby') TV.setMode(null);
+    else if (scene === 'mode') TV.setGame(null);
   }
 });
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-act]'); if (!b) return;
   const act = b.dataset.act, arg = b.dataset.arg;
   if (act === 'mute') { if (window.Sfx) Sfx.toggle(); }
+  else if (act === 'game') TV.setGame(arg || null);
   else if (act === 'mode') TV.setMode(arg || null);
+  else if (S && S.game === 'mafia' && window.MafiaGame) MafiaGame.action(act, arg);
   else if (window.TVGame) TVGame.action(act, arg);
 });
 let curT = null;
@@ -520,6 +559,12 @@ document.body.appendChild(muteBtn);
 const muteTxt = () => { muteBtn.textContent = !window.Sfx ? '' : Sfx.muted ? '🔇 Dźwięk wył.' : Sfx.locked ? '🔈 OK = włącz dźwięk' : '🔊'; };
 muteTxt(); if (window.Sfx) Sfx.onChange(muteTxt); setInterval(muteTxt, 2000);
 // po starcie: tryb z adresu (?mode=multi / ?mode=single), inaczej ekran wyboru
-{ const m = new URLSearchParams(location.search).get('mode'); if (m === 'multi' || m === 'single') document.addEventListener('DOMContentLoaded', () => TV.setMode(m)); }
+{
+  const q = new URLSearchParams(location.search), m = q.get('mode'), g = q.get('game');
+  document.addEventListener('DOMContentLoaded', () => {
+    if (g === 'mafia' || g === 'impostor') { TV.game = g; saveGame(g); }
+    if (TV.game && (m === 'multi' || m === 'single')) TV.setMode(m); else if (m === 'multi' || m === 'single') { TV.game = 'impostor'; TV.setMode(m); } else draw();
+  });
+}
 draw();
 })();

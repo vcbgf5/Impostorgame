@@ -18,6 +18,12 @@
 <script src="js/sound.js"></script>
 <script src="js/tv.js"></script>
 <script src="js/tvgame.js"></script>
+<script src="js/narrator.js"></script>
+<script src="js/mafia-core.js"></script>
+<script src="js/mafia-cards.js"></script>
+<script src="js/mafia-engine.js"></script>
+<script src="js/mafiagame.js"></script>
+<script src="js/tv-mafia.js"></script>
 <script>
 // Połączenie z telefonem hosta: PeerJS (WebRTC) + BroadcastChannel (karta w tej samej przeglądarce)
 (function () {
@@ -33,25 +39,28 @@
     if (typeof m === 'string') { try { m = JSON.parse(m); } catch (e) { return; } }
     if (!m) return;
     if (m.type === 'state' || m.type === 'hello') {
-      if (TV.mode === 'multi') {
-        if (m.type === 'state' && !c._warned) {
-          c._warned = true;
-          try { c.send({ type: 'err', text: 'Telewizor jest w trybie „Każdy swój telefon”. Zmień tryb na telewizorze.' }); } catch (e) {}
-          setTimeout(function () { try { c.close(); } catch (e) {} }, 800);
-        }
-        return;
+      if (m.type === 'hello') return;
+      var ok = TV.onMessage(m);
+      if (ok === false && !c._warned) {
+        c._warned = true;
+        try { c.send({ type: 'err', text: TV.mode === 'multi' ? 'Telewizor jest w trybie „Każdy swój telefon”. Zmień tryb na telewizorze.' : 'Telewizor jest ustawiony na inną grę. Zmień grę na telewizorze.' }); } catch (e) {}
+        setTimeout(function () { try { c.close(); } catch (e) {} }, 800);
       }
-      TV.onMessage(m); return;
+      return;
     }
-    TVGame.onPlayerMsg(c, m);
+    if (m.type === 'join') players.add(c);
+    (TV.game === 'mafia' ? MafiaGame : TVGame).onPlayerMsg(c, m);
   }
+  // wszystkie telefony graczy – po zmianie gry/trybu proszone o ponowne dołączenie
+  var players = new Set();
+  TV.rejoinAll = function () { players.forEach(function (c) { if (c.open === false) { players.delete(c); return; } try { c.send({ type: 'rejoin' }); } catch (e) {} }); };
   // gracze w tej samej przeglądarce (test: play.html?local=1)
   try {
     var pbc = new BroadcastChannel('impostor-play'), fake = {};
     pbc.onmessage = function (e) {
       var d = e.data || {}; if (!d.from) return;
       var c = fake[d.from];
-      if (!c) c = fake[d.from] = { open: true, send: function (m) { pbc.postMessage({ to: d.from, m: m }); }, close: function () { this.open = false; TVGame.onClose(this); delete fake[d.from]; } };
+      if (!c) c = fake[d.from] = { open: true, send: function (m) { pbc.postMessage({ to: d.from, m: m }); }, close: function () { this.open = false; TVGame.onClose(this); MafiaGame.onClose(this); delete fake[d.from]; } };
       route(c, d.m);
     };
   } catch (e) {}
@@ -70,7 +79,7 @@
     peer.on('connection', function (c) {
       c.on('open', function () { TV.addSender(function (m) { if (c.open && !c._pid) c.send(m); }); });
       c.on('data', function (m) { route(c, m); });
-      c.on('close', function () { TVGame.onClose(c); });
+      c.on('close', function () { players.delete(c); TVGame.onClose(c); MafiaGame.onClose(c); });
     });
     peer.on('disconnected', function () { try { if (!peer.destroyed) peer.reconnect(); } catch (e) {} });
     peer.on('error', function (e) {
