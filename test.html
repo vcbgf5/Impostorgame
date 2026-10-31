@@ -83,7 +83,7 @@
   function start() {
     const game = $('game').value, n = Number(cnt.value), r = Date.now().toString(36).slice(-3);
     history.replaceState(null, '', `?game=${game}&n=${n}`);
-    $('tv').src = `tv.html?game=${game}&mode=multi&t=${r}`;
+    $('tv').src = `tv.html?game=${game}&mode=multi&t=${r}`; // tv.html ładuje skrypty z ?v=wersja
     const grid = $('grid');
     grid.innerHTML = '';
     // gracze dołączają po chwili, gdy telewizor już działa
@@ -126,12 +126,17 @@
   const tvWin = () => $('tv').contentWindow;
   document.querySelectorAll('[data-tv]').forEach(b => b.onclick = () => {
     if ($('game').value !== 'mafia') { $('game').value = 'mafia'; start(); return setTimeout(() => b.click(), 2500); }
-    const w = tvWin(); if (w && w.TV && w.TV.demo) { w.TV.demo(b.dataset.tv); try { w.focus(); } catch (e) {} }
+    const w = tvWin();
+    if (!w || !w.TV) return alert('Telewizor jeszcze się ładuje – spróbuj za sekundę.');
+    if (!w.TV.demo) return alert('Przeglądarka ma w pamięci starą wersję gry. Odśwież stronę: Ctrl+Shift+R (albo Ctrl+F5).');
+    w.TV.demo(b.dataset.tv); try { w.focus(); } catch (e) {}
   });
   const PL = ['Ania', 'Bartek', 'Celina', 'Darek', 'Ewa', 'Franek'].map((n, i) => ({ id: 'd' + i, name: n, color: ['#ff4d6d', '#4dabf7', '#51cf66', '#fcc419', '#cc5de8', '#ff922b'][i], emoji: ['🐱', '🦊', '🐸', '🦁', '🐷', '🐙'][i], score: 0, delta: 0, online: true, alive: true }));
   document.querySelectorAll('[data-ph]').forEach(b => b.onclick = () => {
     const w = tvWin(); if (w && w.MafiaGame && w.MafiaGame.active) w.MafiaGame.deactivate();
-    const f = document.querySelector('.ph iframe'); if (!f || !f.contentWindow.__playerDemo) return alert('Poczekaj, aż telefony się załadują.');
+    const f = document.querySelector('.ph iframe');
+    if (!f) return alert('Poczekaj, aż telefony się załadują.');
+    if (!f.contentWindow.__playerDemo) return alert('Przeglądarka ma w pamięci starą wersję gry. Odśwież stronę: Ctrl+Shift+R (albo Ctrl+F5).');
     const k = b.dataset.ph, dead = k === 'dead';
     const fx = { 'check-m': { k: 'check', t: 'd3', m: true, src: '🕵️ Śledztwo' }, 'check-c': { k: 'check', t: 'd2', m: false, src: '🔍 Lupa' }, role: { k: 'role', t: 'd4', r: 'doctor', src: '📁 Teczka' },
       shield: { k: 'shield' }, dove: { k: 'dove' }, alarm: { k: 'alarm', t: 'd5' }, 'hit-ok': { k: 'hit', t: 'd1', ok: true }, 'hit-no': { k: 'hit', t: 'd1', ok: false }, dead: { k: 'dead' } }[k];
