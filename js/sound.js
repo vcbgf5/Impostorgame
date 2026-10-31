@@ -22,20 +22,30 @@ function ensure() {
 const ready = () => !!(ensure() && ctx.state === 'running');
 
 /* ---------- pliki mp3 ---------- */
-const FILES = ['pop', 'join', 'ding', 'tick', 'tock', 'blip', 'whoosh', 'drumroll', 'stamp', 'fanfare', 'win', 'wah', 'clown', 'reveal', 'react', 'buzzer', 'start', 'music_lobby', 'music_tension'];
+const FILES = ['pop', 'join', 'join1', 'join2', 'join3', 'ding', 'tick', 'tock', 'blip', 'whoosh', 'drumroll', 'stamp', 'fanfare', 'win', 'wah',
+  'clown', 'reveal', 'react', 'buzzer', 'start', 'impostor', 'count', 'troll', 'music_menu'];
+// pozostała muzyka ładuje się dopiero, gdy jest potrzebna
+const MUSIC = ['lobby', 'tension', 'menu', 'double', 'blitz', 'vote', 'victory'];
 const ALIAS = { drum: 'drumroll' };
-const VOL = { music_lobby: 0.55, music_tension: 0.38, tick: 0.6, react: 0.55, whoosh: 0.7, buzzer: 0.6 };
+const VARIANTS = { join: ['join1', 'join2', 'join3'] };
+// losowa wysokość, żeby powtarzające się efekty nie brzmiały identycznie
+const PITCH = { pop: 0.08, join1: 0.04, join2: 0.04, join3: 0.04, join: 0.05, ding: 0.06, blip: 0.1, tick: 0.05, tock: 0.05, whoosh: 0.12, stamp: 0.06, react: 0.3, count: 0.03 };
+const VOL = { music_lobby: 0.55, music_tension: 0.4, music_menu: 0.5, music_double: 0.5, music_blitz: 0.48, music_vote: 0.45, music_victory: 0.55, tick: 0.6, react: 0.55, whoosh: 0.7, buzzer: 0.6 };
 const BUF = {};
 function decode(ab) {
   return new Promise((res, rej) => { try { const p = ctx.decodeAudioData(ab, res, rej); if (p && p.then) p.then(res, rej); } catch (e) { rej(e); } });
 }
+const LOADING = {};
+function loadOne(f) {
+  if (!LOADING[f]) LOADING[f] = fetch('sounds/' + f + '.mp3').then(r => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
+    .then(decode).then(b => { BUF[f] = b; return b; }).catch(() => null);
+  return LOADING[f];
+}
 function loadAll() {
   if (!ensure()) return;
-  FILES.forEach(f => {
-    fetch('sounds/' + f + '.mp3').then(r => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
-      .then(decode).then(b => { BUF[f] = b; if (f.startsWith('music_') && musicWanted && !musicT && !musicSrc) startLoop(); })
-      .catch(() => {});
-  });
+  FILES.forEach(f => loadOne(f).then(() => { if (f === 'music_' + musicWanted && !musicT && !musicSrc) startLoop(); }));
+  // po chwili dociągnij resztę muzyki w tle
+  setTimeout(() => MUSIC.forEach(m => loadOne('music_' + m)), 4000);
 }
 function notify() { listeners.forEach(fn => { try { fn(); } catch (e) {} }); if (musicWanted) startLoop(); }
 ['keydown', 'pointerdown', 'click', 'touchstart'].forEach(ev => document.addEventListener(ev, () => { ensure(); setTimeout(notify, 50); }, { passive: true }));
@@ -128,7 +138,13 @@ function startLoop() {
     musicSrc.connect(musicSrcGain); musicSrcGain.connect(master); musicSrc.start();
     return;
   }
-  if (musicWanted !== 'lobby') return; // zapasowa muzyka syntezatora tylko w lobby
+  // zapasowa muzyka z syntezatora: tylko lobby i tylko gdy pliku nie da się wczytać
+  if (musicWanted !== 'lobby' || !LOADING.music_lobby) return;
+  LOADING.music_lobby.then(b => { if (b || musicWanted !== 'lobby' || musicT || musicSrc || muted) return; startSynth(); });
+  return;
+}
+function startSynth() {
+  if (!ready() || musicT) return;
   nextAt = ctx.currentTime + 0.1;
   musicGain.gain.cancelScheduledValues(ctx.currentTime);
   musicGain.gain.setValueAtTime(0.0001, ctx.currentTime); musicGain.gain.exponentialRampToValueAtTime(0.5, ctx.currentTime + 1.5);
@@ -154,9 +170,11 @@ function playBuf(name, t, rate = 1) {
 window.Sfx = {
   play(name, delay = 0) {
     if (muted || !ready()) return;
-    const f = ALIAS[name] || name, t = ctx.currentTime + 0.02 + delay;
+    let f = ALIAS[name] || name;
+    if (VARIANTS[f]) { const ok = VARIANTS[f].filter(v => BUF[v]); if (ok.length) f = ok[Math.floor(Math.random() * ok.length)]; }
+    const t = ctx.currentTime + 0.02 + delay, pr = PITCH[f] || 0;
     try {
-      if (playBuf(f, t, f === 'react' ? 0.8 + Math.random() * 0.6 : 1)) return;
+      if (playBuf(f, t, 1 + (Math.random() * 2 - 1) * pr)) return;
       if (FX[name]) FX[name](t);
     } catch (e) {}
   },
@@ -165,7 +183,9 @@ window.Sfx = {
     const want = track === true ? 'lobby' : track || null;
     if (want === musicWanted) return;
     stopLoop(); musicWanted = want;
-    if (want && !muted) startLoop();
+    if (!want) return;
+    if (BUF['music_' + want]) { if (!muted) startLoop(); return; }
+    if (ensure()) loadOne('music_' + want).then(() => { if (musicWanted === want && !muted) startLoop(); });
   },
   toggle() {
     muted = !muted;

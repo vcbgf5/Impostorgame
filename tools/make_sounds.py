@@ -521,8 +521,251 @@ def fx_start():
     save('start', reverb(buf, 1.2, 0.25))
 
 
+# ---------------------------------------------------------------- piosenki (kompozytor)
+NOTE = {'C': 0, 'D': 2, 'E': 4, 'F': 5, 'G': 7, 'A': 9, 'B': 11}
+
+
+def midi(tok):
+    pc = NOTE[tok[0]]
+    i = 1
+    if i < len(tok) and tok[i] in '#b':
+        pc += 1 if tok[i] == '#' else -1
+        i += 1
+    return 12 * (int(tok[i:]) + 1) + pc
+
+
+def parse(mel, step):
+    """'A4 . C5 - D5' → [(start_s, midi, dur_s)]; jeden token = jeden krok, '-' przedłuża, '.' pauza, '|' ignorowane."""
+    toks = [t for t in mel.split() if t != '|']
+    ev, cur = [], None
+    for i, t in enumerate(toks):
+        if t == '-':
+            if cur: cur[2] += step
+            continue
+        if cur: ev.append(tuple(cur)); cur = None
+        if t != '.':
+            cur = [i * step, midi(t), step]
+    if cur: ev.append(tuple(cur))
+    return ev, len(toks) * step
+
+
+def chord(name):
+    """'Am7' → nuty MIDI (oktawa 4)."""
+    root = name[0]; i = 1
+    pc = NOTE[root]
+    if i < len(name) and name[i] in '#b':
+        pc += 1 if name[i] == '#' else -1; i += 1
+    q = name[i:]
+    r = 60 + pc if pc < 7 else 48 + pc
+    iv = {'': [0, 4, 7], 'm': [0, 3, 7], '7': [0, 4, 7, 10], 'm7': [0, 3, 7, 10], 'maj7': [0, 4, 7, 11], 'dim': [0, 3, 6], 'sus': [0, 5, 7]}[q]
+    return [r + x for x in iv]
+
+
+def lead_note(m, dur, v=1.0, kind='square'):
+    n = int((dur + 0.08) * SR); tt = np.arange(n) / SR
+    f = hz(m) * (1 + 0.006 * np.sin(2 * np.pi * 5.8 * tt) * np.clip((tt - 0.12) / 0.2, 0, 1))
+    if kind == 'square':
+        s = additive(f, n, [(k, 1 / k) for k in range(1, 22, 2)]) * 0.8
+        e = env(n, 0.004, 0.08, 0.7, 0.05, dur=dur)
+    elif kind == 'saw':  # akordeon / smyczek – dwa lekko rozstrojone
+        s = additive(f, n, SAW[:14]) + additive(f * 1.004, n, SAW[:14])
+        s = fft_filter(s, hi=3500) * 0.5
+        e = env(n, 0.03, 0.1, 0.8, 0.07, dur=dur)
+    elif kind == 'bell':
+        return bell(m, dur + 0.6, v * 0.9)
+    elif kind == 'epiano':
+        return epiano(m, dur + 0.3, v)
+    else:  # pluck
+        return pluck(m, dur + 0.15, v, bright=1.8)
+    return s * e * v
+
+
+def delay(x, beat, fb=0.35, mix=0.28, taps=4, dotted=True):
+    d = int((beat * 0.75 if dotted else beat * 0.5) * SR)
+    out = x.copy()
+    g = mix
+    for k in range(1, taps + 1):
+        sh = np.zeros_like(x); sh[d * k:] = x[:len(x) - d * k] if d * k < len(x) else 0
+        out += fft_filter(sh, hi=4000) * g
+        g *= fb
+    return out
+
+
+def pump(n, beat, depth=0.45, offset=0.0):
+    tt = (np.arange(n) / SR - offset) % beat
+    return 1 - depth * np.exp(-tt / 0.09)
+
+
+DRUMS = {
+    'four':    dict(k='x...x...x...x...', s='....x.......x...', h='..x...x...x...x.', c='....x.......x...'),
+    'four16':  dict(k='x...x...x...x...', s='....x.......x...', h='xxxxxxxxxxxxxxxx', c=''),
+    'chill':   dict(k='x.....x...x.....', s='....x.......x...', h='x.x.x.x.x.x.x.xx', c=''),
+    'tango':   dict(k='x.......x.......', s='', h='x..x.x..x..x.x..', c='............x.x.'),
+    'happy':   dict(k='x...x...x...x...', s='', h='..x...x...x...x.', c='....x.......x...'),
+    'drive':   dict(k='x...x...x...x..x', s='....x.......x...', h='x.xxx.xxx.xxx.xx', c='....x.......x...'),
+}
+
+
+def song(name, bpm, prog, melody, drums, lead='square', bass_pat=None, arp=False, keys='epiano',
+         mel2=None, lead2='bell', reps=2, swing=0.0, br='128k', vol=0.8, intro_bars=1):
+    beat = 60 / bpm; st16 = beat / 4
+    bars = len(prog) * reps
+    L = bars * 4 * beat
+    tail = 2.5
+    n = int((L + tail) * SR)
+    D = np.zeros(n); B = np.zeros(n); K = np.zeros(n); M = np.zeros(n); A = np.zeros(n)
+    pat = DRUMS[drums]
+    for b in range(bars):
+        ch = chord(prog[b % len(prog)])
+        t0 = b * 4 * beat
+        intro = b < intro_bars
+        for i in range(16):
+            ts = t0 + i * st16 + (swing * st16 if i % 2 else 0)
+            if pat['k'] and pat['k'][i] == 'x' and (not intro or i == 0): place(D, kick(0.95), ts)
+            if pat['s'] and pat['s'][i] == 'x' and not intro: place(D, snare(0.5), ts)
+            if pat['h'] and pat['h'][i] == 'x': place(D, hat(0.22 if i % 4 else 0.3), ts)
+            if pat['c'] and pat['c'][i] == 'x' and not intro: place(D, clap(0.45), ts)
+        if b % 8 == 7 and not intro:
+            for i in (12, 13, 14, 15): place(D, snare(0.25 + 0.08 * (i - 12)), t0 + i * st16)
+        if b % 8 == 0 and b > 0: place(D, crash(0.25, 2.0), t0)
+        # bas
+        bp = bass_pat or [(0, 0, 2), (4, 0, 2), (8, 12, 2), (12, 7, 2)]
+        for i, iv, ln in bp:
+            place(B, bass(ch[0] - 24 + iv, ln * st16 * 0.95, 0.9), t0 + i * st16)
+        # akordy
+        if keys == 'epiano':
+            for i in (2, 6, 10, 14):
+                for m in ch: place(K, epiano(m + 12, 0.3, 0.2), t0 + i * st16)
+        elif keys == 'stabs':
+            for i in (2, 6, 10, 14):
+                for m in ch: place(K, lead_note(m + 12, st16 * 1.2, 0.18, 'saw'), t0 + i * st16)
+        elif keys == 'oompah':
+            for i in (4, 12):
+                for m in ch[1:]: place(K, lead_note(m + 12, st16 * 1.5, 0.2, 'saw'), t0 + i * st16)
+        place(K, pad([m + 12 for m in ch], 4 * beat + 0.3, 0.35), t0)
+        if arp:
+            notes = ch + [ch[0] + 12]
+            for i in range(16):
+                place(A, lead_note(notes[i % len(notes)] + 24, st16 * 0.8, 0.12, 'square'), t0 + i * st16)
+    # melodie (zaczynają po intro)
+    off = intro_bars * 4 * beat
+    ev, mlen = parse(melody, beat / 2)
+    k = 0
+    while off + k * mlen < L - 0.1:
+        for t, m, d in ev:
+            if off + k * mlen + t < L:
+                place(M, lead_note(m, d * 0.92, 0.55, lead), off + k * mlen + t)
+        if mel2:
+            ev2, _ = parse(mel2, beat / 2)
+            for t, m, d in ev2:
+                if off + k * mlen + t < L: place(M, lead_note(m, d * 0.9, 0.35, lead2), off + k * mlen + t)
+        k += 1
+    M = reverb(delay(M, beat), 1.3, 0.25)[:n]
+    K = reverb(K, 1.1, 0.25)[:n]
+    A = delay(A, beat, mix=0.2)
+    pm = pump(n, beat)
+    mixd = D * 0.85 + B * 0.8 * pm + K * 0.75 * pm + M * 0.95 + A * 0.6 * pm
+    save(name, soft(fold_loop(mixd, L) * 1.1, 1.15), br=br, trim=False, peak=vol)
+
+
+def music_menu():
+    song('music_menu', 98, ['Cmaj7', 'Am7', 'Dm7', 'G7'],
+         'E5 . G5 . A5 G5 E5 . | C5 . D5 E5 - . . . | F5 . E5 . D5 C5 A4 . | B4 - C5 D5 - - . . | '
+         'E5 . G5 . A5 G5 E5 C6 | B5 - A5 G5 - . . . | F5 . A5 . G5 F5 D5 . | C5 - - - . . . .',
+         'chill', lead='bell', swing=0.18, reps=4, keys='epiano', vol=0.72)
+
+
+def music_double():
+    song('music_double', 118, ['Dm', 'A7', 'Gm', 'A7', 'Dm', 'Gm', 'Bb', 'A7'],
+         'D5 - - E5 F5 - E5 D5 | C#5 - D5 - A4 - - . | Bb4 - - C5 D5 - C5 Bb4 | A4 - - - E5 - - . | '
+         'F5 - - E5 D5 - E5 F5 | G5 - F5 - E5 - D5 . | Bb5 - A5 G5 F5 - E5 D5 | C#5 - E5 - D5 - - .',
+         'tango', lead='saw', bass_pat=[(0, 0, 3), (3, 7, 1), (4, 12, 2), (6, 7, 2), (8, 0, 3), (11, 7, 1), (12, 12, 2), (14, 7, 2)],
+         keys='oompah', reps=2, vol=0.78)
+
+
+def music_blitz():
+    song('music_blitz', 150, ['Am', 'F', 'C', 'G'],
+         'A5 A5 C6 A5 E6 - D6 C6 | F5 F5 A5 F5 C6 - B5 A5 | G5 G5 C6 G5 E6 - D6 C6 | B5 - G5 - D6 - B5 .',
+         'four16', lead='square', arp=True, keys='stabs', reps=4,
+         bass_pat=[(i, 0 if i % 4 == 0 else 12, 2) for i in range(0, 16, 2)], vol=0.78)
+
+
+def music_vote():
+    song('music_vote', 128, ['Em', 'C', 'Am', 'B'],
+         'E5 . G5 . B5 . A5 G5 | E5 . G5 . C6 . B5 . | A5 . C6 . E6 . D6 C6 | B5 - - - D#5 - - .',
+         'drive', lead='square', keys='stabs', reps=4,
+         bass_pat=[(i, 0, 1) for i in range(16)], vol=0.76)
+
+
+def music_victory():
+    song('music_victory', 120, ['C', 'G', 'Am', 'F'],
+         'E5 E5 G5 - E5 D5 C5 - | D5 D5 G5 - D5 C5 B4 - | C5 C5 E5 - A5 G5 E5 - | F5 E5 D5 - C5 - - .',
+         'happy', lead='pluck', mel2='C6 . . . . . . . | B5 . . . . . . . | A5 . . . . . . . | A5 . . . G5 . . .',
+         lead2='bell', reps=4, vol=0.78)
+
+
+# ---------------------------------------------------------------- nowe dżingle
+def fx_join_variants():
+    for i, notes in enumerate(([76, 79, 84], [72, 76, 81, 84], [79, 84, 88]), 1):
+        buf = np.zeros(int(1.2 * SR))
+        for j, m in enumerate(notes):
+            place(buf, mix(bell(m + 12, 0.7, 0.45), pluck(m, 0.25, 0.4, 2)), j * 0.075)
+        save(f'join{i}', reverb(buf, 0.9, 0.22))
+
+
+def fx_start():
+    # dżingiel startu rundy: riser + „ta-da-da-DAM!”
+    buf = np.zeros(int(3.0 * SR))
+    n = int(0.7 * SR)
+    place(buf, sweep_filter(noise(n), 200, 6000, q=1.2) * np.linspace(0, 1, n) ** 2 * 0.9, 0)
+    for m, at, d in ((69, 0.7, 0.12), (72, 0.84, 0.12), (76, 0.98, 0.12), (81, 1.14, 1.0)):
+        place(buf, mix(brass(m, d + 0.05, 0.45, vib=0.004), lead_note(m + 12, d, 0.25, 'square')), at)
+        place(buf, snare(0.35), at)
+    for m in (57, 64, 69, 72):
+        place(buf, brass(m, 1.0, 0.22, vib=0.005), 1.14)
+    place(buf, mix(kick(1.2), crash(0.3, 1.5)), 1.14)
+    save('start', reverb(buf, 1.3, 0.25))
+
+
+def fx_impostor():
+    # „dun dun DUNNN” – mroczne odkrycie impostora
+    buf = np.zeros(int(3.6 * SR))
+    for at, m, d, v in ((0.0, 38, 0.32, 0.7), (0.42, 38, 0.32, 0.7), (0.9, 37, 1.8, 0.9)):
+        place(buf, mix(brass(m + 12, d, v * 0.6), brass(m + 24, d, v * 0.35), bass(m, d, v)), at)
+        place(buf, kick(1.3), at)
+    place(buf, crash(0.1, 1.6), 0.9)
+    place(buf, pad([61, 64, 67], 2.0, 0.8), 0.9)  # zmniejszony akord – niepokój
+    save('impostor', reverb(buf, 1.8, 0.3))
+
+
+def fx_count():
+    # 3 – 2 – 1 – teraz! (do głosowania „na trzy”)
+    buf = np.zeros(int(2.6 * SR))
+    for i in range(3):
+        place(buf, mix(lead_note(76, 0.12, 0.6, 'square'), woodblock(1500, 0.4)), i * 0.6)
+    place(buf, mix(lead_note(88, 0.35, 0.7, 'square'), lead_note(84, 0.35, 0.4, 'square'), clap(0.6), kick(0.9)), 1.8)
+    save('count', reverb(buf, 0.8, 0.2))
+
+
+def fx_troll():
+    # cyrkowa melodyjka trolla
+    buf = np.zeros(int(3.2 * SR))
+    mel = 'G5 F#5 G5 . E5 . C5 . | D5 C#5 D5 . B4 . G4 . | C5 . E5 . G5 . C6 - - -'
+    ev, _ = parse(mel, 0.11)
+    for t, m, d in ev:
+        place(buf, lead_note(m, d * 0.9, 0.45, 'square'), t)
+    for i in range(0, 24, 2):
+        place(buf, bass(43 + (0 if (i // 2) % 2 == 0 else 7), 0.1, 0.6), i * 0.11)
+        place(buf, lead_note(67 if (i // 2) % 2 == 0 else 62, 0.08, 0.2, 'saw'), i * 0.11 + 0.11)
+    n2 = int(0.2 * SR)
+    h = additive(420, n2, SQR[:12]) + additive(434, n2, SQR[:12])
+    place(buf, fft_filter(h, peak=1100, q=0.6) * env(n2, 0.005, 0.02, 0.8, 0.04) * 1.4, 2.75)
+    save('troll', reverb(buf, 0.8, 0.18))
+
+
 if __name__ == '__main__':
     for fn in (fx_pop, fx_join, fx_ding, fx_tick, fx_tock, fx_blip, fx_whoosh, fx_drumroll, fx_stamp,
                fx_fanfare, fx_win, fx_wah, fx_clown, fx_reveal, fx_react, fx_buzzer, fx_start,
-               music_lobby, music_tension):
+               fx_join_variants, fx_impostor, fx_count, fx_troll,
+               music_lobby, music_tension, music_menu, music_double, music_blitz, music_vote, music_victory):
         fn()

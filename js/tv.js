@@ -381,11 +381,11 @@ const MOUNT = {
   },
   discuss() { SFX('whoosh'); let i = 0; const el = stage.querySelector('#tip'); every(6000, () => { el.innerHTML = `<span>${TIPS[i++ % TIPS.length]}</span>`; }); },
   'res-word'() { const res = S.R.res; if (res.troll || res.wasImp) { confetti(); SFX('fanfare'); } else { flash(); SFX('wah'); } },
-  'res-impostors'() { const r = S.R.res; if (r.troll) { confetti(); SFX('clown'); } else if (r.fake) SFX('reveal', 1.3); else { if (r.accused && r.accused !== 'troll') SFX('stamp', 0.3); SFX('reveal', 1.5); } },
+  'res-impostors'() { const r = S.R.res; if (r.troll) { confetti(); SFX('troll'); SFX('clown', 3.2); } else { if (r.accused && r.accused !== 'troll') SFX('stamp', 0.3); SFX(r.fake ? 'reveal' : 'impostor', 1.3); } },
   'res-accused'() { SFX('drum'); },
   scores() { if (S.final && S.final.length) { confetti(160); setTimeout(() => confetti(120), 1500); SFX('win'); } else { confetti(40); SFX('reveal'); } },
   ready() { SFX('ding'); },
-  vote() { SFX('blip'); },
+  vote() { SFX(MULTI() ? 'blip' : 'count'); },
 };
 
 function sceneKey() {
@@ -407,7 +407,7 @@ function draw() {
   if (fk !== fullKey) {
     if (k === 'reveal' || k === 'mreveal') SFX(scene === 'reveal' || scene === 'mreveal' ? 'whoosh' : 'start');
     fullKey = fk; scene = k; clearLoops();
-    if (window.Sfx) Sfx.music(['mode', 'wait', 'lobby', 'mlobby', 'scores'].includes(k) ? 'lobby' : ['discuss', 'vote'].includes(k) ? 'tension' : null);
+    if (window.Sfx) Sfx.music(musicFor(k));
     stage.innerHTML = SCENES[k]();
     stage.firstElementChild.classList.add('enter');
     if (MOUNT[k]) MOUNT[k]();
@@ -430,6 +430,17 @@ function eventSounds() {
     if (now.picks > ev.picks && ev.picks >= 0) SFX('blip');
   }
   ev = now;
+}
+
+// muzyka zależna od ekranu i trybu gry
+function musicFor(k) {
+  const gm = S && S.settings && S.settings.gmode;
+  if (k === 'mode' || k === 'wait' || k === 'reveal' || k === 'mreveal' || k === 'ready') return 'menu';
+  if (k === 'lobby' || k === 'mlobby') return 'lobby';
+  if (k === 'discuss') return gm === 'double' ? 'double' : gm === 'blitz' ? 'blitz' : 'tension';
+  if (k === 'vote') return gm === 'blitz' ? 'blitz' : 'vote';
+  if (k === 'scores') return 'victory';
+  return null;
 }
 
 /* ---------- pilot: strzałki + OK ---------- */

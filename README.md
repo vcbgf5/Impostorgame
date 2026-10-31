@@ -27,7 +27,17 @@ Test lokalny trybu wielu telefonów w jednej przeglądarce: `tv.html` w jednej k
 - **🏁 Gra do X punktów** (10/15/20): kto pierwszy dobije, wygrywa. Na TV pojawia się podium z koroną.
 
 ### Dźwięki, emoji i reakcje
-- Telewizor gra muzykę w lobby i muzykę napięcia w czasie dyskusji i głosowania. Do tego werbel przed wynikiem, tykanie w ostatnich 10 s, brzęczyk na koniec czasu, fanfary albo „wah wah”, klakson przy trollu i dźwięk dołączenia gracza.
+- **Piosenki (7):** każdy ekran i tryb ma swoją.
+  | Kiedy | Utwór |
+  |---|---|
+  | wybór trybu, rozdawanie ról | `music_menu` – chillowy groove |
+  | lobby | `music_lobby` – szpiegowski groove |
+  | dyskusja (Klasyczny) | `music_tension` – napięcie |
+  | dyskusja (Podwójny agent) | `music_double` – noirowe tango |
+  | dyskusja i głosowanie (Błyskawica) | `music_blitz` – szybki chiptune |
+  | głosowanie | `music_vote` – pulsujący beat |
+  | tabela wyników | `music_victory` – radosny hit |
+- **Efekty:** dżingiel startu rundy, 3 wersje dzwonka dołączenia, odliczanie „3-2-1” przed głosowaniem, tykanie, brzęczyk, werbel, pieczątka, „dun dun DUNN” przy odkryciu impostora, cyrkowa melodyjka trolla, fanfary, „wah wah”. Powtarzające się efekty grają za każdym razem lekko inną wysokością (pitch), więc się nie nudzą.
 - Dźwięki to pliki **mp3 w folderze `sounds/`**. Są w 100% nasze (wygenerowane skryptem `tools/make_sounds.py`, numpy + ffmpeg), więc nie ma problemu z licencją. Żeby podmienić dźwięk, wrzuć własny mp3 o tej samej nazwie (np. `sounds/fanfare.mp3`). Gdy pliku brak, gra użyje zapasowego dźwięku generowanego w przeglądarce.
 - Przycisk 🔊 jest w prawym górnym rogu (pilotem: strzałka w górę → OK). Przeglądarka włączy dźwięk dopiero po pierwszym naciśnięciu OK albo kliknięciu.
 - Każdy gracz ma awatar emoji. W trybie jednego telefonu zmieniasz go, klikając awatar, a w trybie wielu telefonów wybiera go gracz.
