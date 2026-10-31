@@ -72,7 +72,10 @@ function timerLeft() {
   return t.running ? Math.max(0, t.left - (performance.now() - recvAt)) : t.left;
 }
 setInterval(() => {
-  if (!S || !S.timer) return;
+  // koniec czasu (także gdy gra od razu przeszła dalej): brzęczyk
+  const secNow = S && S.timer && S.timer.running ? Math.ceil(timerLeft() / 1000) : 0;
+  if (lastTickSec === 1 && (secNow === 0 || secNow > 5)) { SFX('buzzer'); lastTickSec = secNow; }
+  if (!S || !S.timer) { lastTickSec = 0; return; }
   const left = timerLeft(), frac = S.timer.total ? left / (S.timer.total * 1000) : 0;
   stage.querySelectorAll('.tv-timer').forEach(el => { el.textContent = fmt(left); el.classList.toggle('low', left < 10000 && left > 0); });
   stage.querySelectorAll('.tv-ring').forEach(el => { el.style.strokeDashoffset = String(100 - Math.max(0, Math.min(1, frac)) * 100); el.classList.toggle('low', left < 10000); });
@@ -402,9 +405,9 @@ function draw() {
   const fk = k + (k === 'reveal' ? (R.peek || R.idx) + R.stage : '') + (S ? S.round : '');
   const fkey = focusKey();
   if (fk !== fullKey) {
-    if ((k === 'reveal' || k === 'mreveal') && scene !== 'wait') SFX('whoosh');
+    if (k === 'reveal' || k === 'mreveal') SFX(scene === 'reveal' || scene === 'mreveal' ? 'whoosh' : 'start');
     fullKey = fk; scene = k; clearLoops();
-    if (window.Sfx) Sfx.music(['mode', 'wait', 'lobby', 'mlobby'].includes(k));
+    if (window.Sfx) Sfx.music(['mode', 'wait', 'lobby', 'mlobby', 'scores'].includes(k) ? 'lobby' : ['discuss', 'vote'].includes(k) ? 'tension' : null);
     stage.innerHTML = SCENES[k]();
     stage.firstElementChild.classList.add('enter');
     if (MOUNT[k]) MOUNT[k]();
@@ -421,7 +424,7 @@ function eventSounds() {
   const R = S.R || {}, res = R.res || {};
   const now = { players: S.players.length, seen: (R.seen || []).length, votes: Object.keys(R.ballots || {}).length, picks: Object.keys(res.picks || {}).length, round: S.round };
   if (now.round === ev.round) {
-    if (now.players > ev.players && ev.players >= 0) SFX('pop');
+    if (now.players > ev.players && ev.players >= 0) SFX('join');
     if (now.seen > ev.seen && ev.seen >= 0) SFX('ding');
     if (now.votes > ev.votes && ev.votes >= 0) SFX('blip');
     if (now.picks > ev.picks && ev.picks >= 0) SFX('blip');

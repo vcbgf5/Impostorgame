@@ -1,7 +1,8 @@
-/* Impostor – dźwięki i muzyka generowane w przeglądarce (Web Audio, bez plików) */
+/* Impostor – dźwięki i muzyka: pliki mp3 z folderu sounds/ (zrobione przez tools/make_sounds.py),
+   a gdy plik się nie wczyta – zapasowe dźwięki generowane w przeglądarce (Web Audio) */
 (() => {
 'use strict';
-let ctx = null, master = null, musicGain = null, musicT = null, step = 0, nextAt = 0, musicWanted = false;
+let ctx = null, master = null, musicGain = null, musicT = null, step = 0, nextAt = 0, musicWanted = null;
 let muted = false;
 try { muted = localStorage.getItem('imp_mute') === '1'; } catch (e) {}
 const listeners = [];
@@ -19,6 +20,23 @@ function ensure() {
   return ctx;
 }
 const ready = () => !!(ensure() && ctx.state === 'running');
+
+/* ---------- pliki mp3 ---------- */
+const FILES = ['pop', 'join', 'ding', 'tick', 'tock', 'blip', 'whoosh', 'drumroll', 'stamp', 'fanfare', 'win', 'wah', 'clown', 'reveal', 'react', 'buzzer', 'start', 'music_lobby', 'music_tension'];
+const ALIAS = { drum: 'drumroll' };
+const VOL = { music_lobby: 0.55, music_tension: 0.38, tick: 0.6, react: 0.55, whoosh: 0.7, buzzer: 0.6 };
+const BUF = {};
+function decode(ab) {
+  return new Promise((res, rej) => { try { const p = ctx.decodeAudioData(ab, res, rej); if (p && p.then) p.then(res, rej); } catch (e) { rej(e); } });
+}
+function loadAll() {
+  if (!ensure()) return;
+  FILES.forEach(f => {
+    fetch('sounds/' + f + '.mp3').then(r => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
+      .then(decode).then(b => { BUF[f] = b; if (f.startsWith('music_') && musicWanted && !musicT && !musicSrc) startLoop(); })
+      .catch(() => {});
+  });
+}
 function notify() { listeners.forEach(fn => { try { fn(); } catch (e) {} }); if (musicWanted) startLoop(); }
 ['keydown', 'pointerdown', 'click', 'touchstart'].forEach(ev => document.addEventListener(ev, () => { ensure(); setTimeout(notify, 50); }, { passive: true }));
 
@@ -98,22 +116,57 @@ function scheduleMusic() {
     nextAt += EIGHTH; step++;
   }
 }
+let musicSrc = null, musicSrcGain = null;
 function startLoop() {
-  if (!ready() || musicT) return;
+  if (!ready() || musicT || musicSrc || !musicWanted) return;
+  const b = BUF['music_' + musicWanted];
+  if (b) {
+    musicSrc = ctx.createBufferSource(); musicSrcGain = ctx.createGain();
+    musicSrc.buffer = b; musicSrc.loop = true;
+    const v = VOL['music_' + musicWanted] || 0.5;
+    musicSrcGain.gain.setValueAtTime(0.0001, ctx.currentTime); musicSrcGain.gain.exponentialRampToValueAtTime(v, ctx.currentTime + 1.2);
+    musicSrc.connect(musicSrcGain); musicSrcGain.connect(master); musicSrc.start();
+    return;
+  }
+  if (musicWanted !== 'lobby') return; // zapasowa muzyka syntezatora tylko w lobby
   nextAt = ctx.currentTime + 0.1;
   musicGain.gain.cancelScheduledValues(ctx.currentTime);
   musicGain.gain.setValueAtTime(0.0001, ctx.currentTime); musicGain.gain.exponentialRampToValueAtTime(0.5, ctx.currentTime + 1.5);
   musicT = setInterval(scheduleMusic, 100);
 }
 function stopLoop() {
+  if (musicSrc) {
+    const s = musicSrc, g = musicSrcGain; musicSrc = null; musicSrcGain = null;
+    try { g.gain.cancelScheduledValues(ctx.currentTime); g.gain.setValueAtTime(g.gain.value, ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.7); s.stop(ctx.currentTime + 0.75); } catch (e) {}
+  }
   if (!musicT) return;
   clearInterval(musicT); musicT = null;
   if (ctx) { musicGain.gain.cancelScheduledValues(ctx.currentTime); musicGain.gain.setValueAtTime(musicGain.gain.value, ctx.currentTime); musicGain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.6); }
 }
 
+function playBuf(name, t, rate = 1) {
+  const b = BUF[name]; if (!b) return false;
+  const src = ctx.createBufferSource(), g = ctx.createGain();
+  src.buffer = b; src.playbackRate.value = rate; g.gain.value = VOL[name] || 1;
+  src.connect(g); g.connect(master); src.start(t);
+  return true;
+}
 window.Sfx = {
-  play(name, delay = 0) { if (muted || !ready() || !FX[name]) return; try { FX[name](ctx.currentTime + 0.02 + delay); } catch (e) {} },
-  music(on) { musicWanted = !!on; if (on && !muted) startLoop(); else stopLoop(); },
+  play(name, delay = 0) {
+    if (muted || !ready()) return;
+    const f = ALIAS[name] || name, t = ctx.currentTime + 0.02 + delay;
+    try {
+      if (playBuf(f, t, f === 'react' ? 0.8 + Math.random() * 0.6 : 1)) return;
+      if (FX[name]) FX[name](t);
+    } catch (e) {}
+  },
+  // track: 'lobby' | 'tension' | null (true = 'lobby')
+  music(track) {
+    const want = track === true ? 'lobby' : track || null;
+    if (want === musicWanted) return;
+    stopLoop(); musicWanted = want;
+    if (want && !muted) startLoop();
+  },
   toggle() {
     muted = !muted;
     try { localStorage.setItem('imp_mute', muted ? '1' : '0'); } catch (e) {}
@@ -123,7 +176,9 @@ window.Sfx = {
     notify();
   },
   get muted() { return muted; },
+  get loaded() { return Object.keys(BUF); },
   get locked() { return !ctx || ctx.state !== 'running'; },
   onChange(fn) { listeners.push(fn); },
 };
+loadAll();
 })();
