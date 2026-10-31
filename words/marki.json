@@ -1,0 +1,11 @@
+{
+  "name": "Marki i firmy",
+  "emoji": "🏷️",
+  "groups": {
+    "marka technologiczna": "Apple, Samsung, Xiaomi, Huawei, Sony, LG, Philips, Microsoft, Google, Amazon, Meta, Netflix, Spotify, Tesla, Intel, Nvidia, AMD, Lenovo, Dell, HP, Asus, Acer, Nintendo, PlayStation, Xbox, Canon, Nikon, GoPro, JBL, Bose, Logitech, Razer, Dyson, Bosch, Allegro, OLX, Uber, Bolt, Airbnb, Booking",
+    "marka odzieżowa": "Nike, Adidas, Puma, Reebok, New Balance, Converse, Vans, Under Armour, The North Face, Zara, H&M, Reserved, Cropp, House, Sinsay, Mohito, Levi's, Tommy Hilfiger, Calvin Klein, Ralph Lauren, Lacoste, Gucci, Prada, Louis Vuitton, Chanel, Dior, Versace, Balenciaga, Supreme, Crocs, Timberland, Dr. Martens, Wólczanka, Vistula, 4F",
+    "marka spożywcza": "Coca-Cola, Pepsi, Fanta, Sprite, Red Bull, Tymbark, Kubuś, Hortex, Żywiec Zdrój, Nałęczowianka, Nestlé, Milka, Wedel, Wawel, Prince Polo, Grześki, Kinder, Nutella, Haribo, Lays, Pringles, Cheetos, Oreo, Danone, Danio, Actimel, Mlekovita, Łaciate, Hochland, Knorr, Winiary, Pudliszki, Heinz, Lipton, Nescafé, Jacobs, Tchibo, Lavazza, McDonald's, KFC, Burger King, Starbucks, Subway, Pizza Hut, Domino's, Telepizza, Costa Coffee, Żabka, Biedronka, Lidl",
+    "marka samochodowa": "Toyota, Volkswagen, BMW, Mercedes, Audi, Opel, Ford, Fiat, Renault, Peugeot, Citroën, Škoda, Seat, Kia, Hyundai, Mazda, Honda, Nissan, Subaru, Suzuki, Volvo, Porsche, Ferrari, Lamborghini, Maserati, Bugatti, Bentley, Rolls-Royce, Jaguar, Land Rover, Jeep, Dodge, Chevrolet, Cadillac, Mini, Dacia, Lexus, Polonez, Syrena, Tesla",
+    "marka zabawek i rozrywki": "LEGO, Barbie, Hot Wheels, Playmobil, Hasbro, Mattel, Disney, Pixar, Marvel, DC, Warner Bros, Universal, Pokémon, Nerf, Fisher-Price, Trefl, Monopoly, Twister, Rubik, CD Projekt, Ubisoft, EA Sports, Rockstar, Riot Games, Epic Games, Valve, Steam, Twitch, YouTube, TikTok"
+  }
+}

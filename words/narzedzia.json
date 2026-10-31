@@ -1,0 +1,10 @@
+{
+  "name": "Narzędzia i warsztat",
+  "emoji": "🔧",
+  "groups": {
+    "narzędzie ręczne": "młotek, śrubokręt, klucz francuski, klucz płaski, klucz nasadowy, imbus, kombinerki, szczypce, obcęgi, piła, piłka do metalu, siekiera, toporek, dłuto, pilnik, tarnik, strug, poziomica, miarka, taśma miernicza, ekierka stolarska, ścisk, imadło, kielnia, szpachla, pędzel, wałek malarski, nożyk do tapet, nóż introligatorski, łom, kilof, łopata, szpadel, grabie, motyka, widły, sekator, nożyce do żywopłotu, taczka, konewka, wąż ogrodowy, drabina, wiadro, kątownik, przecinak, pistolet do silikonu, zszywacz tapicerski, nitownica, lutownica, tester napięcia",
+    "elektronarzędzie": "wiertarka, wkrętarka, szlifierka, szlifierka kątowa, piła łańcuchowa, piła tarczowa, wyrzynarka, frezarka, młot udarowy, opalarka, pistolet do kleju, kosiarka, podkaszarka, dmuchawa do liści, myjka ciśnieniowa, kompresor, spawarka, betoniarka, agregat prądotwórczy, odkurzacz przemysłowy, glebogryzarka, rębak, piła do drewna, strugarka, polerka",
+    "materiał i drobiazg": "gwóźdź, śruba, wkręt, nakrętka, podkładka, kołek rozporowy, nit, zawias, uszczelka, taśma izolacyjna, taśma klejąca srebrna, klej, silikon, gips, cement, piasek, cegła, pustak, deska, sklejka, płyta gipsowa, płytka ceramiczna, fuga, farba, lakier, bejca, rozpuszczalnik, papier ścierny, drut, kabel, rura, kolanko, kran, uszczelka do kranu, żarówka, gniazdko, łańcuch, lina, sznurek, opaska zaciskowa, karton, folia bąbelkowa, plandeka, styropian, wełna mineralna",
+    "w warsztacie i na budowie": "rusztowanie, dźwig, koparka, spycharka, wywrotka, betoniarka, kask budowlany, kamizelka odblaskowa, rękawice robocze, gogle ochronne, nauszniki, stół warsztatowy, skrzynka na narzędzia, pas narzędziowy, plan budowy, fundament, ściana nośna, strop, dach, komin, rynna, okno dachowe, tynk, elewacja, ocieplenie"
+  }
+}

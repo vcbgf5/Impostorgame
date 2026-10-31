@@ -1,0 +1,10 @@
+{
+  "name": "Muzyka",
+  "emoji": "🎸",
+  "groups": {
+    "instrument": "gitara, gitara elektryczna, gitara basowa, ukulele, banjo, mandolina, skrzypce, altówka, wiolonczela, kontrabas, harfa, fortepian, pianino, keyboard, syntezator, organy, akordeon, harmonijka ustna, flet, flet prosty, klarnet, obój, fagot, saksofon, trąbka, puzon, tuba, waltornia, perkusja, bęben, werbel, talerze, kotły, ksylofon, dzwonki, cymbały, trójkąt, marakasy, tamburyn, kastaniety, bongosy, djembe, didgeridoo, dudy, lutnia, cytra, sitar, okaryna, kalimba, gong, dzwon, beatbox, gramofon DJ-ski, theremin, melodyka",
+    "gatunek muzyczny": "rock, pop, rap, hip-hop, jazz, blues, metal, punk, reggae, disco, disco polo, techno, house, trance, dubstep, drum and bass, muzyka klasyczna, opera, country, folk, soul, funk, R&B, gospel, grunge, indie, k-pop, latino, salsa, tango, walc, polka, mazurek, polonez, kujawiak, oberek, flamenco, samba, bossa nova, trap, drill, lo-fi, synthwave, eurodance, szanty, kolędy, muzyka filmowa, rock and roll, swing, ska",
+    "pojęcie muzyczne": "nuta, klucz wiolinowy, pięciolinia, akord, melodia, rytm, tempo, refren, zwrotka, solówka, koncert, festiwal, płyta, album, singiel, teledysk, playlista, karaoke, chór, orkiestra, zespół, duet, dyrygent, batuta, scena, mikrofon, wzmacniacz, głośnik, kostka do gitary, struna, smyczek, metronom, kamerton, nuty, stroik, bis, owacja, trasa koncertowa, backstage, fan, autograf, lista przebojów, hit, cover, remiks, sample, beat, freestyle, bitwa freestyle'owa, mosh pit",
+    "taniec": "walc, tango, salsa, bachata, cha-cha, rumba, samba, jive, quickstep, foxtrot, breakdance, hip-hop dance, balet, taniec brzucha, flamenco, polonez, krakowiak, zumba, twerk, moonwalk, robot, kankan, lambada, macarena, belgijka"
+  }
+}

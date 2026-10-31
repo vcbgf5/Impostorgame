@@ -1,0 +1,11 @@
+{
+  "name": "Ubrania i moda",
+  "emoji": "👕",
+  "groups": {
+    "ubranie": "koszulka, t-shirt, koszula, bluzka, bluza, sweter, golf, kardigan, kamizelka, marynarka, garnitur, smoking, frak, żakiet, kurtka, płaszcz, kożuch, parka, wiatrówka, kurtka puchowa, ramoneska, prochowiec, peleryna, poncho, spodnie, dżinsy, szorty, spodenki, leginsy, dresy, bojówki, ogrodniczki, spódnica, sukienka, suknia balowa, suknia ślubna, kombinezon, tunika, top, crop top, body, piżama, szlafrok, kostium kąpielowy, bikini, kąpielówki, bielizna, majtki, bokserki, stanik, rajstopy, skarpetki, podkolanówki, pończochy, podkoszulek, polo, longsleeve, bezrękawnik, kimono, sari, kilt, toga, mundur, fartuch, habit, strój karnawałowy, kostium superbohatera, onesie, jeansowa kurtka, bluza z kapturem, kurtka narciarska",
+    "obuwie": "buty, trampki, adidasy, sneakersy, kozaki, botki, kalosze, sandały, klapki, japonki, szpilki, baleriny, mokasyny, półbuty, glany, kapcie, laczki, espadryle, chodaki, korki piłkarskie, buty narciarskie, buty trekkingowe, łyżwy, kowbojki, oficerki, crocsy, koturny, czółenka, emu, muszkieterki",
+    "dodatek": "czapka, kapelusz, beret, kaszkiet, czapka z daszkiem, kominiarka, opaska, chustka, szalik, apaszka, rękawiczki, mitenki, pasek, szelki, krawat, muszka, poszetka, spinki do mankietów, torebka, kopertówka, plecak, nerka, portfel, parasolka, okulary, okulary przeciwsłoneczne, zegarek, bransoletka, naszyjnik, łańcuszek, kolczyki, pierścionek, obrączka, broszka, wisiorek, diadem, korona, spinka do włosów, gumka do włosów, opaska na włosy, welon, wachlarz, kapelusz słomkowy, cylinder, melonik, turban, hidżab, nauszniki, piercing, tatuaż",
+    "materiał i wzór": "bawełna, len, wełna, jedwab, kaszmir, jeans, skóra, zamsz, futro, polar, dzianina, aksamit, welur, satyna, koronka, tiul, szyfon, poliester, nylon, lateks, krata, paski, kropki, panterka, moro, kwiaty, pepitka, jodełka, ombre, cekiny",
+    "moda": "wybieg, pokaz mody, projektant, butik, przymierzalnia, wieszak, manekin, metka, rozmiar, wyprzedaż, second hand, lumpeks, krawiec, szwalnia, maszyna do szycia, guzik, zamek błyskawiczny, rzep, sznurówka, kieszeń, kaptur, kołnierz, rękaw, mankiet, nogawka, podszewka, haft, nadruk, logo, stylizacja"
+  }
+}

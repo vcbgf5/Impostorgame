@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Impostor – TV</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;600;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/tv.css">
+</head>
+<body>
+<div class="bg"><i></i><i></i><i></i></div>
+<div id="stage"></div>
+<script src="js/config.js"></script>
+<script src="js/vendor/qrcode.js"></script>
+<script src="js/vendor/peerjs.min.js"></script>
+<script src="js/tv.js"></script>
+<script>
+// Połączenie z telefonem hosta: PeerJS (WebRTC) + BroadcastChannel (karta w tej samej przeglądarce)
+(function () {
+  var CFG = window.IMPOSTOR_CONFIG || {};
+  var PREFIX = CFG.PEER_PREFIX || 'impostor-pl-gra-';
+  var ABC = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  function newCode() { var c = ''; for (var i = 0; i < 4; i++) c += ABC[Math.floor(Math.random() * ABC.length)]; return c; }
+  var code; try { code = localStorage.getItem('imp_tv_code'); } catch (e) {}
+  if (!code) code = newCode();
+  var fails = 0;
+
+  try {
+    var bc = new BroadcastChannel('impostor-tv');
+    bc.onmessage = function (e) { TV.onMessage(e.data); };
+    TV.addSender(function (m) { bc.postMessage(m); });
+  } catch (e) {}
+
+  function start() {
+    try { localStorage.setItem('imp_tv_code', code); } catch (e) {}
+    TV.setCode(code, 'connecting');
+    if (!window.Peer) { TV.setCode(code, 'offline'); return setTimeout(start, 5000); }
+    var peer = new Peer(PREFIX + code);
+    peer.on('open', function () { fails = 0; TV.setCode(code, 'ready'); });
+    peer.on('connection', function (c) {
+      c.on('open', function () { TV.addSender(function (m) { if (c.open) c.send(m); }); c.send({ type: 'hello' }); });
+      c.on('data', function (m) { TV.onMessage(m); });
+    });
+    peer.on('disconnected', function () { try { if (!peer.destroyed) peer.reconnect(); } catch (e) {} });
+    peer.on('error', function (e) {
+      if (e.type === 'unavailable-id') {
+        // kod zajęty (np. stara karta jeszcze wisi) – kilka prób, potem nowy kod
+        try { peer.destroy(); } catch (x) {}
+        if (++fails >= 3) { code = newCode(); fails = 0; }
+        setTimeout(start, 3000);
+      } else if (e.type === 'network' || e.type === 'server-error' || e.type === 'socket-error' || e.type === 'socket-closed') {
+        TV.setCode(code, 'offline');
+        try { peer.destroy(); } catch (x) {}
+        setTimeout(start, 4000);
+      }
+    });
+  }
+  start();
+})();
+</script>
+</body>
+</html>

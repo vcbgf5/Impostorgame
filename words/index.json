@@ -1,0 +1,161 @@
+{
+ "version": 1,
+ "categories": [
+  {
+   "id": "jedzenie",
+   "file": "jedzenie.json",
+   "name": "Jedzenie",
+   "emoji": "🍕"
+  },
+  {
+   "id": "zwierzeta",
+   "file": "zwierzeta.json",
+   "name": "Zwierzęta",
+   "emoji": "🐾"
+  },
+  {
+   "id": "dom",
+   "file": "dom.json",
+   "name": "Rzeczy w domu",
+   "emoji": "🏠"
+  },
+  {
+   "id": "przedmioty",
+   "file": "przedmioty.json",
+   "name": "Przedmioty różne",
+   "emoji": "📦"
+  },
+  {
+   "id": "zawody",
+   "file": "zawody.json",
+   "name": "Zawody",
+   "emoji": "👷"
+  },
+  {
+   "id": "sport",
+   "file": "sport.json",
+   "name": "Sport",
+   "emoji": "⚽"
+  },
+  {
+   "id": "miejsca",
+   "file": "miejsca.json",
+   "name": "Miejsca",
+   "emoji": "📍"
+  },
+  {
+   "id": "swiat",
+   "file": "swiat.json",
+   "name": "Kraje i miasta",
+   "emoji": "🌍"
+  },
+  {
+   "id": "polska",
+   "file": "polska.json",
+   "name": "Polska",
+   "emoji": "🇵🇱"
+  },
+  {
+   "id": "transport",
+   "file": "transport.json",
+   "name": "Transport",
+   "emoji": "🚗"
+  },
+  {
+   "id": "ubrania",
+   "file": "ubrania.json",
+   "name": "Ubrania i moda",
+   "emoji": "👕"
+  },
+  {
+   "id": "cialo",
+   "file": "cialo.json",
+   "name": "Ciało i zdrowie",
+   "emoji": "🫀"
+  },
+  {
+   "id": "technologia",
+   "file": "technologia.json",
+   "name": "Technologia",
+   "emoji": "💻"
+  },
+  {
+   "id": "muzyka",
+   "file": "muzyka.json",
+   "name": "Muzyka",
+   "emoji": "🎸"
+  },
+  {
+   "id": "natura",
+   "file": "natura.json",
+   "name": "Natura i pogoda",
+   "emoji": "🌳"
+  },
+  {
+   "id": "szkola",
+   "file": "szkola.json",
+   "name": "Szkoła",
+   "emoji": "🎒"
+  },
+  {
+   "id": "swieta",
+   "file": "swieta.json",
+   "name": "Święta i imprezy",
+   "emoji": "🎉"
+  },
+  {
+   "id": "rozrywka",
+   "file": "rozrywka.json",
+   "name": "Filmy, bajki i postacie",
+   "emoji": "🎬"
+  },
+  {
+   "id": "hobby",
+   "file": "hobby.json",
+   "name": "Hobby i gry",
+   "emoji": "🎲"
+  },
+  {
+   "id": "kosmos",
+   "file": "kosmos.json",
+   "name": "Kosmos i fantastyka",
+   "emoji": "🚀"
+  },
+  {
+   "id": "czynnosci",
+   "file": "czynnosci.json",
+   "name": "Czynności",
+   "emoji": "🏃"
+  },
+  {
+   "id": "emocje",
+   "file": "emocje.json",
+   "name": "Emocje i cechy",
+   "emoji": "😃"
+  },
+  {
+   "id": "marki",
+   "file": "marki.json",
+   "name": "Marki i firmy",
+   "emoji": "🏷️"
+  },
+  {
+   "id": "narzedzia",
+   "file": "narzedzia.json",
+   "name": "Narzędzia i warsztat",
+   "emoji": "🔧"
+  },
+  {
+   "id": "historia",
+   "file": "historia.json",
+   "name": "Historia i rycerze",
+   "emoji": "⚔️"
+  },
+  {
+   "id": "wakacje",
+   "file": "wakacje.json",
+   "name": "Wakacje i podróże",
+   "emoji": "🏖️"
+  }
+ ]
+}

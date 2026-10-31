@@ -1,0 +1,14 @@
+{
+  "name": "Zawody",
+  "emoji": "👷",
+  "groups": {
+    "zawód medyczny": "lekarz, pielęgniarka, chirurg, dentysta, ratownik medyczny, farmaceuta, weterynarz, psycholog, psychiatra, fizjoterapeuta, położna, pediatra, okulista, kardiolog, anestezjolog, radiolog, dermatolog, laryngolog, ortopeda, neurolog, dietetyk, logopeda, masażysta, optyk, sanitariusz, ginekolog, onkolog, stomatolog, higienistka, opiekun medyczny",
+    "zawód w mundurze": "policjant, strażak, żołnierz, strażnik miejski, celnik, strażnik graniczny, pilot wojskowy, marynarz, komandos, saper, ochroniarz, detektyw, agent specjalny, kontroler biletów, ratownik wodny, konduktor, kapitan statku, generał, snajper, spadochroniarz",
+    "zawód w szkole i nauce": "nauczyciel, dyrektor szkoły, przedszkolanka, wykładowca, profesor, naukowiec, bibliotekarz, pedagog, woźny, sekretarka, chemik, fizyk, biolog, matematyk, astronom, archeolog, historyk, geolog, meteorolog, informatyk, tłumacz, językoznawca, filozof, laborant, badacz, korepetytor, trener personalny, instruktor jazdy, opiekunka, niania",
+    "zawód rzemieślniczy": "stolarz, hydraulik, elektryk, murarz, malarz pokojowy, dekarz, glazurnik, ślusarz, spawacz, mechanik samochodowy, kowal, szewc, krawiec, zegarmistrz, jubiler, fryzjer, barber, kosmetyczka, tapicer, szklarz, kominiarz, ogrodnik, rolnik, leśnik, rybak, piekarz, cukiernik, rzeźnik, kucharz, kelner, barman, barista, sommelier, pszczelarz, garncarz, florystka, złota rączka, monter, operator koparki, dźwigowy",
+    "zawód w biurze": "księgowy, prawnik, adwokat, sędzia, prokurator, notariusz, bankier, makler, analityk, programista, grafik, architekt, inżynier, projektant, marketingowiec, sprzedawca, handlowiec, kasjer, recepcjonista, menedżer, prezes, asystent, rekruter, doradca finansowy, agent nieruchomości, ubezpieczyciel, urzędnik, sekretarz, kierownik, audytor, specjalista HR, tester gier, copywriter, data scientist, administrator IT",
+    "zawód artystyczny": "aktor, aktorka, piosenkarz, muzyk, raper, DJ, tancerz, malarz, rzeźbiarz, fotograf, reżyser, scenarzysta, pisarz, poeta, dziennikarz, prezenter, influencer, youtuber, streamer, komik, iluzjonista, klaun, akrobata, cyrkowiec, projektant mody, model, modelka, dyrygent, kompozytor, operator kamery, montażysta, animator, ilustrator, tatuażysta, charakteryzator, kaskader, lektor, aktor dubbingowy, choreograf, gitarzysta",
+    "zawód w transporcie": "kierowca, taksówkarz, kierowca autobusu, maszynista, pilot, stewardesa, kontroler lotów, kurier, listonosz, dostawca pizzy, kierowca ciężarówki, motorniczy, kapitan, sternik, przewoźnik, magazynier, spedytor, kierowca wyścigowy, astronauta, operator drona",
+    "zawód sportowy": "piłkarz, trener, sędzia sportowy, bramkarz, bokser, zawodnik MMA, tenisista, pływak, skoczek narciarski, kolarz, biegacz, siatkarz, koszykarz, szachista, e-sportowiec, żużlowiec, kierowca F1, gimnastyczka, łyżwiarz, alpinista"
+  }
+}

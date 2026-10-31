@@ -1,0 +1,11 @@
+{
+  "name": "Ciało i zdrowie",
+  "emoji": "🫀",
+  "groups": {
+    "część ciała": "głowa, twarz, czoło, oko, brew, rzęsa, powieka, nos, ucho, usta, warga, ząb, język, policzek, broda, podbródek, szyja, kark, ramię, bark, łokieć, przedramię, nadgarstek, dłoń, palec, kciuk, paznokieć, pięść, klatka piersiowa, brzuch, pępek, plecy, kręgosłup, biodro, pośladek, udo, kolano, łydka, kostka, stopa, pięta, palec u nogi, włosy, grzywka, wąsy, broda z zarostem, skóra, pacha, łopatka, żebro, czaszka, szczęka, gardło, migdałki, dziurka w nosie, pieg, pieprzyk, dołeczek, zmarszczka",
+    "narząd": "serce, płuca, mózg, żołądek, wątroba, nerki, jelita, trzustka, śledziona, pęcherz, przełyk, tchawica, krtań, skóra, mięsień, ścięgno, kość, szpik, krew, żyła, tętnica, nerw, rdzeń kręgowy, siatkówka, źrenica, tęczówka, bębenek, ślina, pot, łzy",
+    "choroba i dolegliwość": "przeziębienie, grypa, katar, kaszel, gorączka, ból głowy, migrena, ból brzucha, ból zęba, angina, zapalenie ucha, ospa, odra, świnka, różyczka, alergia, astma, cukrzyca, nadciśnienie, złamanie, zwichnięcie, skręcenie, siniak, guz, oparzenie, odmrożenie, rana, zadrapanie, czkawka, kichanie, bezsenność, chrapanie, katar sienny, zatrucie, biegunka, wysypka, trądzik, łupież, próchnica, zawrót głowy, omdlenie, kac, choroba lokomocyjna, udar słoneczny, ukąszenie, opryszczka, zapalenie płuc, anemia, COVID, kontuzja",
+    "w szpitalu i aptece": "lekarstwo, tabletka, syrop, maść, krople, zastrzyk, szczepionka, strzykawka, igła, kroplówka, bandaż, plaster, gips, kule, wózek inwalidzki, nosze, stetoskop, termometr, ciśnieniomierz, rentgen, tomograf, USG, rezonans, recepta, skierowanie, karetka, izba przyjęć, SOR, sala operacyjna, skalpel, maseczka, rękawiczki lateksowe, fartuch lekarski, inhalator, aparat ortodontyczny, okulary korekcyjne, soczewki kontaktowe, aparat słuchowy, proteza, wenflon, witamina, probiotyk, antybiotyk, środek przeciwbólowy, wata, gaza, spirytus, woda utleniona, apteczka, poczekalnia",
+    "czynność ciała": "oddychanie, kichanie, ziewanie, mruganie, przełykanie, czkawka, sen, chrapanie, płacz, śmiech, pocenie się, drżenie, dreszcze, gęsia skórka, rumieniec, uśmiech, marszczenie brwi, mrużenie oczu, gwizdanie, klaskanie, pstrykanie, tupanie, przeciąganie się, drapanie się, bekanie"
+  }
+}

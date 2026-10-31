@@ -1,0 +1,12 @@
+{
+  "name": "Natura i pogoda",
+  "emoji": "🌳",
+  "groups": {
+    "drzewo": "dąb, buk, brzoza, sosna, świerk, jodła, modrzew, klon, jesion, lipa, wierzba, topola, olcha, grab, kasztanowiec, akacja, jarzębina, cis, cedr, cyprys, palma, baobab, sekwoja, eukaliptus, bambus, magnolia, wiśnia japońska, jabłoń, grusza, orzech włoski, leszczyna, platan, wiąz, osika, figowiec, oliwka, choinka, bonsai, mangrowe, kokosowiec",
+    "kwiat": "róża, tulipan, stokrotka, mak, chaber, słonecznik, rumianek, lilia, storczyk, orchidea, fiołek, konwalia, przebiśnieg, krokus, żonkil, hiacynt, bratek, goździk, gerbera, frezja, piwonia, hortensja, bez, lawenda, niezapominajka, dmuchawiec, mlecz, aksamitka, nagietek, pelargonia, begonia, azalia, rododendron, kaktus, lotos, lilia wodna, irys, mieczyk, chryzantema, dalia, astra, nasturcja, malwa, jaśmin, kamelia, magnolia, sasanka, szarotka, krokus wiosenny, lilak",
+    "roślina": "trawa, mech, paproć, bluszcz, winorośl, pokrzywa, oset, koniczyna, czterolistna koniczyna, babka lancetowata, mięta, szałwia, aloes, sukulent, kaktus, grzyb, borowik, kurka, muchomor, pieczarka, podgrzybek, maślak, kania, opieńka, trufla, jemioła, ostrokrzew, wrzos, tatarak, trzcina, rzęsa wodna, wodorosty, porost, liść, łodyga, korzeń, kora, gałąź, pień, szyszka, żołądź, kasztan, nasiono, pąk, płatek, kolec, cierń, pyłek, sok z brzozy, zielnik",
+    "pogoda": "słońce, deszcz, ulewa, mżawka, burza, piorun, błyskawica, grzmot, tęcza, chmura, mgła, szron, rosa, śnieg, śnieżyca, grad, lód, gołoledź, wiatr, huragan, tornado, trąba powietrzna, tajfun, cyklon, upał, susza, mróz, odwilż, zamieć, monsun, smog, wichura, bryza, zachmurzenie, prognoza pogody, termometr, barometr, parasol, kałuża, sopel, bałwan, zorza polarna, zaćmienie, wschód słońca, zachód słońca, babie lato, przymrozek, chmura burzowa, halny, fala upałów",
+    "pora roku i czas": "wiosna, lato, jesień, zima, poranek, południe, popołudnie, wieczór, noc, północ, świt, zmierzch, weekend, poniedziałek, piątek, niedziela, styczeń, luty, marzec, kwiecień, maj, czerwiec, lipiec, sierpień, wrzesień, październik, listopad, grudzień, przesilenie, równonoc",
+    "krajobraz i żywioł": "ogień, woda, ziemia, powietrze, kamień, skała, piasek, glina, błoto, kryształ, diament, złoto, srebro, żelazo, węgiel, ropa naftowa, lawa, magma, trzęsienie ziemi, lawina, powódź, tsunami, erupcja, osuwisko, fala, przypływ, odpływ, prąd morski, wir, gorące źródło"
+  }
+}

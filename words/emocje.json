@@ -1,0 +1,10 @@
+{
+  "name": "Emocje i cechy",
+  "emoji": "😃",
+  "groups": {
+    "emocja": "radość, smutek, złość, strach, zaskoczenie, wstręt, wstyd, duma, zazdrość, zawiść, miłość, nienawiść, tęsknota, nostalgia, nuda, ciekawość, nadzieja, rozczarowanie, ulga, stres, niepokój, panika, spokój, ekscytacja, euforia, wdzięczność, poczucie winy, zakłopotanie, samotność, szczęście, frustracja, irytacja, zachwyt, podziw, współczucie, empatia, litość, pogarda, rozbawienie, zauroczenie, zakochanie, zmęczenie, senność, głód, pragnienie, podekscytowanie, trema, zniecierpliwienie, melancholia, błogość",
+    "cecha charakteru": "odwaga, tchórzostwo, lenistwo, pracowitość, uczciwość, kłamliwość, szczerość, nieśmiałość, pewność siebie, arogancja, skromność, hojność, skąpstwo, cierpliwość, niecierpliwość, upór, ambicja, poczucie humoru, złośliwość, życzliwość, uprzejmość, chamstwo, punktualność, spóźnialstwo, roztargnienie, pedantyzm, bałaganiarstwo, gadatliwość, małomówność, optymizm, pesymizm, naiwność, spryt, mądrość, głupota, kreatywność, lojalność, zdrada, zazdrosność, perfekcjonizm, troskliwość, egoizm, altruizm, spontaniczność, ostrożność, wybuchowość, dziecinność, dojrzałość, romantyzm, marudność",
+    "wygląd": "wysoki, niski, chudy, umięśniony, łysy, kudłaty, rudy, blondyn, brunet, siwy, piegowaty, opalony, blady, okularnik, wąsacz, brodacz, kręcone włosy, warkocz, kucyk, kok, irokez, dredy, grzywka, tatuaż, kolczyk w nosie, aparat na zębach, dołeczki w policzkach, pieprzyk, zmarszczki, rumieńce",
+    "stan i sytuacja": "spóźnienie, korek, kac, choroba, urlop, deadline, przeprowadzka, rozstanie, randka, oświadczyny, pierwsza praca, zwolnienie, awans, wygrana w lotto, zgubione klucze, rozładowany telefon, brak Wi-Fi, poniedziałek rano, piątek wieczór, zgubiony bagaż, zepsuty samochód, złapanie gumy, spalony obiad, zalane mieszkanie, wyłączony prąd, zapomniane urodziny, niespodzianka, plotka, sekret, kłótnia z sąsiadem"
+  }
+}
