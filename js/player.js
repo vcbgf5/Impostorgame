@@ -8,7 +8,9 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': 
 const ini = n => esc((n || '?').trim().charAt(0).toUpperCase());
 const fmt = ms => { const s = Math.ceil(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
 const vib = p => { try { navigator.vibrate && navigator.vibrate(p); } catch (e) {} };
-const av = (p, cls = '') => p ? `<span class="av ${cls}" style="--c:${p.color}">${ini(p.name)}</span>` : '';
+const av = (p, cls = '') => p ? `<span class="av ${cls} ${p.emoji ? 'emo' : ''}" style="--c:${p.color}">${p.emoji || ini(p.name)}</span>` : '';
+const EMOJI = ['🐱', '🐶', '🦊', '🐼', '🐸', '🐵', '🦁', '🐯', '🐷', '🐨', '🐙', '🦄', '🐲', '👽', '🤖', '👻', '🎃', '🤠', '😎', '🥸', '🦖', '🐧', '🦉', '🐝'];
+const REACTS = ['😂', '😱', '🤔', '😡', '👏', '🔥', '🤡', '🕵️', '❤️', '👀'];
 const normCode = c => String(c || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
 const params = new URLSearchParams(location.search);
 const LOCAL = params.get('local') === '1';
@@ -22,7 +24,9 @@ const ME = {
   pid: store.get('pid', '') || (Math.random().toString(36).slice(2) + Date.now().toString(36)),
   name: store.get('name', ''),
   code: normCode(params.get('tv')) || store.get('code', ''),
+  emoji: store.get('emoji', ''),
 };
+if (!ME.emoji) { ME.emoji = EMOJI[Math.floor(Math.random() * EMOJI.length)]; store.set('emoji', ME.emoji); }
 store.set('pid', ME.pid);
 if (params.get('tv')) history.replaceState(null, '', location.pathname + (LOCAL ? '?local=1' : ''));
 
@@ -53,7 +57,7 @@ function loadPeer() {
   return peerLib;
 }
 function retryLater() { clearTimeout(T.retry); if (want) T.retry = setTimeout(connect, 3000); }
-function join() { sendTV({ type: 'join', pid: ME.pid, name: ME.name }); }
+function join() { sendTV({ type: 'join', pid: ME.pid, name: ME.name, emoji: ME.emoji }); }
 function connect() {
   clearTimeout(T.retry);
   if (!want || !ME.code) return;
@@ -124,6 +128,8 @@ function vJoin() {
     <form id="joinForm" class="card joinf">
       <label>Twoje imię</label>
       <input id="nm" maxlength="16" placeholder="np. Ania" value="${esc(ME.name)}" autocomplete="off" enterkeyhint="go">
+      <label>Twój awatar</label>
+      <div class="emogrid">${EMOJI.map(e => `<button type="button" class="emo-pick ${ME.emoji === e ? 'on' : ''}" data-act="emoji" data-arg="${e}">${e}</button>`).join('')}</div>
       <label>Kod z telewizora</label>
       <input id="cd" class="code-in" maxlength="6" placeholder="KOD" value="${esc(ME.code)}" autocomplete="off" autocapitalize="characters">
       <button class="btn big primary">Dołącz ▶</button>
@@ -136,6 +142,8 @@ function vLobby() {
     <h1>Jesteś w grze!</h1>
     <p class="muted">Czekajcie, aż ktoś wciśnie <b>START</b> na telewizorze.</p>
     <div class="chips cen">${P.players.map(p => `<span class="chip ${p.id === P.me.id ? 'on' : ''}">${av(p, 'sm')} ${esc(p.name)}</span>`).join('')}</div>
+    <details class="card emocard"><summary>Zmień awatar ${esc(P.me.emoji || '')}</summary>
+      <div class="emogrid">${EMOJI.map(e => { const taken = P.players.some(p => p.id !== P.me.id && p.emoji === e); return `<button class="emo-pick ${P.me.emoji === e ? 'on' : ''}" data-act="emoji" data-arg="${e}" ${taken ? 'disabled' : ''}>${e}</button>`; }).join('')}</div></details>
     <button class="btn sm ghost center-b" data-act="leave">Wyjdź z gry</button></div>`;
 }
 function vRound() {
@@ -172,11 +180,13 @@ function vRound() {
         <p class="muted small">Trafisz = +2 punkty. Masz jeden wybór (możesz go zmienić).</p>
         ${P.timer ? `<div class="clock sm" data-timer>${fmt(timerLeft())}</div>` : ''}
         <div class="opts">${P.options.map((w, i) => `<button class="opt ${P.myPick === w ? 'on' : ''}" data-act="pick" data-arg="${i}">${esc(w)}</button>`).join('')}</div></div>`;
+      if (P.fake) return `<div class="center">${watchTV('🎭 Podwójny agent!')}<p>Impostor miał słowo: <b class="hl">${esc(P.fake)}</b></p></div>`;
       return `<div class="center">${watchTV(P.troll ? '🤡 TROLL!' : 'Impostor wybiera słowo…')}</div>`;
     }
     return `<div class="center">
       <h1>${esc(P.headline || '')}</h1>
       ${P.word ? `<p>Słowo: <b class="hl">${esc(P.word)}</b></p>` : ''}
+      ${P.fake ? `<p class="muted">Impostor miał: <b>${esc(P.fake)}</b></p>` : ''}
       <div class="mydelta ${P.me.delta ? 'plus' : ''}">${P.me.delta ? '+' + P.me.delta : '0'} <small>pkt w tej rundzie</small></div>
       <p class="muted">Razem: <b>${P.me.score}</b> pkt</p></div>`;
   }
@@ -184,6 +194,10 @@ function vRound() {
 }
 function vScores() {
   const list = [...P.players].sort((a, b) => b.score - a.score);
+  const win = (P.final || []).map(PL).filter(Boolean);
+  if (win.length) return `<div class="center"><div class="big-emoji pop">👑</div><h1>${win.some(p => p.id === P.me.id) ? 'WYGRAŁEŚ! 🎉' : 'Koniec gry!'}</h1>
+    <h2>Wygrywa: ${win.map(p => `${av(p, 'sm')} ${esc(p.name)}`).join(', ')}</h2>
+    <ol class="board">${list.map(p => `<li class="${p.id === P.me.id ? 'me' : ''}">${av(p, 'sm')}<span class="pname">${esc(p.name)}</span><b>${p.score}</b></li>`).join('')}</ol></div>`;
   return `<div class="center"><h1>🏆 Wyniki</h1>
     <ol class="board">${list.map(p => `<li class="${p.id === P.me.id ? 'me' : ''}">${av(p, 'sm')}<span class="pname">${esc(p.name)}</span>${p.delta ? `<i>+${p.delta}</i>` : ''}<b>${p.score}</b></li>`).join('')}</ol>
     <p class="muted">Następna runda startuje z telewizora 📺</p></div>`;
@@ -202,7 +216,9 @@ function render(force) {
   else if (P.phase === 'setup') html = vLobby();
   else if (P.phase === 'scores') html = vScores();
   else html = vRound();
+  if (P && P.phase !== 'reveal') html += `<div class="reactbar">${REACTS.map(e => `<button data-act="react" data-arg="${e}">${e}</button>`).join('')}</div>`;
   app.innerHTML = html;
+  document.body.classList.toggle('has-react', !!(P && P.phase !== 'reveal'));
   bindTiles();
   if (!P) { const nm = app.querySelector('#nm'); if (nm && !ME.name) nm.focus(); }
 }
@@ -232,6 +248,12 @@ app.addEventListener('click', e => {
   if (a === 'seen') { sendTV({ type: 'seen' }); vib(30); b.disabled = true; }
   else if (a === 'vote') { sendTV({ type: 'vote', target: arg }); vib(20); }
   else if (a === 'pick') { sendTV({ type: 'pick', i: Number(arg) }); vib(20); }
+  else if (a === 'react') { sendTV({ type: 'react', e: arg }); vib(10); b.classList.remove('fly'); void b.offsetWidth; b.classList.add('fly'); }
+  else if (a === 'emoji') {
+    ME.emoji = arg; store.set('emoji', arg);
+    app.querySelectorAll('.emo-pick').forEach(x => x.classList.toggle('on', x.dataset.arg === arg));
+    if (P) sendTV({ type: 'emoji', e: arg });
+  }
   else if (a === 'leave') { if (confirm('Wyjść z gry?')) { sendTV({ type: 'leave' }); want = false; P = null; disconnect(); render(true); } }
 });
 app.addEventListener('submit', e => {

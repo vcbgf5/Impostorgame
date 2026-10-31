@@ -10,17 +10,21 @@ const store = {
   get(k, d) { try { const v = localStorage.getItem('impm_' + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
   set(k, v) { try { localStorage.setItem('impm_' + k, JSON.stringify(v)); } catch (e) {} },
 };
-const CYCLE = { impostors: [1, 2, 3], troll: [0, 10, 20, 35], discuss: [0, 60, 120, 180, 300], vote: [20, 30, 45, 60] };
+const CYCLE = { impostors: [1, 2, 3], troll: [0, 10, 20, 35], discuss: [0, 60, 120, 180, 300], vote: [20, 30, 45, 60], gmode: ['classic', 'double', 'blitz'], goal: [0, 10, 15, 20] };
+const EMOJI = ['🐱', '🐶', '🦊', '🐼', '🐸', '🐵', '🦁', '🐯', '🐷', '🐨', '🐙', '🦄', '🐲', '👽', '🤖', '👻', '🎃', '🤠', '😎', '🥸', '🦖', '🐧', '🦉', '🐝'];
+const REACTS = ['😂', '😱', '🤔', '😡', '👏', '🔥', '🤡', '🕵️', '❤️', '👀'];
 const PICK_TIME = 40;
 
 const G = {
   active: false, players: [], conns: {}, cats: [], loaded: false,
-  settings: Object.assign({ cats: null, impostors: 1, hint: true, troll: 0, discuss: 180, vote: 30 }, store.get('settings', {})),
+  settings: Object.assign({ cats: null, impostors: 1, hint: true, troll: 0, discuss: 180, vote: 30, gmode: 'classic', goal: 0 }, store.get('settings', {})),
+  final: null, lastReact: {},
   phase: 'setup', round: 0, R: null, timer: null, auto: null, msg: '', msgT: null,
 };
 const save = () => store.set('settings', G.settings);
 const player = id => G.players.find(p => p.id === id);
 const online = id => { const p = player(id); return !!(p && p.online); };
+const dur = k => G.settings.gmode === 'blitz' ? (k === 'discuss' ? 45 : 15) : G.settings[k];
 const nextColor = () => { const used = new Set(G.players.map(p => p.color)); return COLORS.find(c => !used.has(c)) || pick(COLORS); };
 function toast(t) { G.msg = t; clearTimeout(G.msgT); G.msgT = setTimeout(() => { G.msg = ''; render(); }, 3500); render(); }
 
@@ -84,15 +88,18 @@ function startRound() {
   const options = shuffle([it.w, ...same.slice(0, 9), ...rest.slice(0, Math.max(0, 9 - same.length))]);
 
   const ids = ps.map(p => p.id), n = ids.length;
-  const troll = G.settings.troll > 0 && Math.random() * 100 < G.settings.troll;
+  const gmode = G.settings.gmode || 'classic';
+  const troll = gmode !== 'double' && G.settings.troll > 0 && Math.random() * 100 < G.settings.troll;
+  const fake = gmode === 'double' ? (same[0] || rest[0] || '???') : null;
   const impostors = troll ? [...ids] : shuffle(ids).slice(0, clamp(G.settings.impostors, 1, n - 1));
   const crew = ids.filter(i => !impostors.includes(i));
   G.round++;
   G.players.forEach(p => { p.delta = 0; });
   G.R = {
     word: it.w, group: it.g, catName: it.c.name, emoji: it.c.emoji, impostors, troll, ids, order: ids,
-    starter: pick(crew.length ? crew : ids), seen: [], ballots: {}, votes: {}, picks: {}, guessed: [], options, res: null,
+    starter: pick(crew.length ? crew : ids), seen: [], ballots: {}, votes: {}, picks: {}, guessed: [], options, res: null, gmode, fake,
   };
+  G.final = null;
   cancelLater(); G.timer = null; G.phase = 'reveal'; render();
 }
 function checkSeen() {
@@ -100,8 +107,8 @@ function checkSeen() {
   if (G.phase === 'reveal' && R.ids.filter(online).every(id => R.seen.includes(id))) toReady();
 }
 function toReady() { cancelLater(); G.phase = 'ready'; render(); later(3500, goDiscuss); }
-function goDiscuss() { cancelLater(); G.phase = 'discuss'; G.timer = G.settings.discuss ? mkTimer(G.settings.discuss, goVote) : null; render(); }
-function goVote() { cancelLater(); G.phase = 'vote'; G.R.ballots = {}; G.R.votes = {}; G.timer = mkTimer(G.settings.vote, endVote); render(); }
+function goDiscuss() { cancelLater(); G.phase = 'discuss'; G.timer = dur('discuss') ? mkTimer(dur('discuss'), goVote) : null; render(); }
+function goVote() { cancelLater(); G.phase = 'vote'; G.R.ballots = {}; G.R.votes = {}; G.timer = mkTimer(dur('vote'), endVote); render(); }
 function tally() { const R = G.R; R.votes = {}; Object.values(R.ballots).forEach(t => { R.votes[t] = (R.votes[t] || 0) + 1; }); }
 function checkVotes() {
   const R = G.R, need = R.ids.filter(online);
@@ -119,7 +126,7 @@ function endVote() {
 }
 function showImp() {
   cancelLater(); G.R.res.step = 'impostors';
-  if (G.R.troll) { render(); later(6000, showWord); return; }
+  if (G.R.troll || G.R.gmode === 'double') { render(); later(7000, showWord); return; }
   G.timer = mkTimer(PICK_TIME, showWord); render(); checkPicks();
 }
 function checkPicks() {
@@ -153,6 +160,8 @@ function applyPoints() {
     }
     R.guessed.forEach(i => add(i, 2));
   }
+  const goal = G.settings.goal, top = Math.max(0, ...G.players.map(p => p.score));
+  G.final = goal && top >= goal ? G.players.filter(p => p.score === top).map(p => p.id) : null;
 }
 
 /* ---------- akcje z pilota ---------- */
@@ -167,6 +176,7 @@ const ACT = {
   noCats() { G.settings.cats = []; save(); render(); },
   start: startRound,
   next: startRound,
+  newGame() { G.players.forEach(p => { p.score = 0; p.delta = 0; }); G.final = null; toLobby(); },
   kick(id) {
     const c = G.conns[id];
     if (c) { send(c, { type: 'kicked' }); c._replaced = true; setTimeout(() => { try { c.close(); } catch (e) {} }, 300); delete G.conns[id]; }
@@ -198,12 +208,17 @@ function onPlayerMsg(c, m) {
       if (taken(name)) { let k = 2; while (taken(name + ' ' + k)) k++; name = (name.slice(0, 13) + ' ' + k); }
       if (!p) {
         if (G.players.length >= COLORS.length) { send(c, { type: 'err', text: 'Gra jest pełna (max ' + COLORS.length + ' graczy).' }); return; }
-        p = { id, name, color: nextColor(), score: 0, delta: 0, online: true };
+        p = { id, name, color: nextColor(), emoji: '', score: 0, delta: 0, online: true };
         G.players.push(p);
       } else {
         p.online = true;
         if (G.phase === 'setup') p.name = name;
       }
+      if (EMOJI.includes(m.emoji)) {
+        const owner = G.players.find(q => q.id !== id && q.emoji === m.emoji);
+        if (!owner) p.emoji = m.emoji;
+      }
+      if (!p.emoji) { const used = new Set(G.players.map(q => q.emoji)); p.emoji = EMOJI.find(e => !used.has(e)) || pick(EMOJI); }
       const old = G.conns[id];
       if (old && old !== c) { old._replaced = true; try { old.close(); } catch (e) {} }
       G.conns[id] = c; c._pid = id;
@@ -228,6 +243,18 @@ function onPlayerMsg(c, m) {
       R.picks[pid] = w;
       R.guessed = R.impostors.filter(id => R.picks[id] === R.word);
       render(); checkPicks();
+      break;
+    }
+    case 'react': {
+      const p = player(pid); if (!p || !REACTS.includes(m.e)) return;
+      const now = Date.now(); if (now - (G.lastReact[pid] || 0) < 600) return;
+      G.lastReact[pid] = now;
+      if (window.TV && TV.react) TV.react({ name: p.name, color: p.color, emoji: p.emoji }, m.e);
+      break;
+    }
+    case 'emoji': {
+      const p = player(pid); if (!p || !EMOJI.includes(m.e) || G.players.some(q => q.id !== pid && q.emoji === m.e)) return;
+      p.emoji = m.e; render();
       break;
     }
     case 'leave':
@@ -256,11 +283,12 @@ function pub() {
   const R = G.R, S = G.settings;
   const st = {
     mode: 'multi', phase: G.phase, round: G.round, msg: G.msg, loaded: G.loaded,
-    players: G.players.map(p => ({ id: p.id, name: p.name, color: p.color, score: p.score, delta: p.delta || 0, online: p.online })),
+    players: G.players.map(p => ({ id: p.id, name: p.name, color: p.color, emoji: p.emoji, score: p.score, delta: p.delta || 0, online: p.online })),
+    final: G.phase === 'scores' ? G.final : null,
     settings: {
       cats: G.cats.filter(c => S.cats.includes(c.id)).map(c => c.emoji + ' ' + c.name), allCats: G.cats.length,
       catList: G.cats.map(c => ({ id: c.id, name: c.name, emoji: c.emoji, n: c.items.length, on: S.cats.includes(c.id) })),
-      impostors: S.impostors, hint: S.hint, troll: S.troll, discuss: S.discuss, vote: S.vote,
+      impostors: S.impostors, hint: S.hint, troll: S.troll, discuss: dur('discuss'), vote: dur('vote'), gmode: S.gmode, goal: S.goal,
     },
     timer: G.timer ? { total: G.timer.total, left: timerLeft(), running: G.timer.running } : null,
   };
@@ -269,7 +297,7 @@ function pub() {
     if (G.phase === 'result') {
       const res = R.res;
       st.R.res = { step: res.step, accused: res.accused, tie: res.tie };
-      if (res.step !== 'accused') Object.assign(st.R.res, { impostors: R.impostors, troll: R.troll, wasImp: !!res.accused && R.impostors.includes(res.accused), options: R.troll ? [] : R.options, picks: R.picks });
+      if (res.step !== 'accused') Object.assign(st.R.res, { impostors: R.impostors, troll: R.troll, wasImp: !!res.accused && R.impostors.includes(res.accused), options: R.troll || R.gmode === 'double' ? [] : R.options, picks: R.picks, fake: R.fake });
       if (res.step === 'word') Object.assign(st.R.res, { word: R.troll ? '' : R.word, cat: R.emoji + ' ' + R.catName, group: R.group, guessed: R.guessed, headline: res.headline });
     }
   }
@@ -279,21 +307,24 @@ function pstate(p) {
   const R = G.R;
   const st = {
     type: 'p', phase: G.phase, round: G.round,
-    me: { id: p.id, name: p.name, color: p.color, score: p.score, delta: p.delta || 0 },
-    players: G.players.map(q => ({ id: q.id, name: q.name, color: q.color, score: q.score, delta: q.delta || 0, online: q.online })),
+    me: { id: p.id, name: p.name, color: p.color, emoji: p.emoji, score: p.score, delta: p.delta || 0 },
+    players: G.players.map(q => ({ id: q.id, name: q.name, color: q.color, emoji: q.emoji, score: q.score, delta: q.delta || 0, online: q.online })),
+    final: G.phase === 'scores' ? G.final : null, emojis: EMOJI, reacts: REACTS,
     timer: G.timer ? { total: G.timer.total, left: timerLeft(), running: G.timer.running } : null,
     troll: G.settings.troll > 0,
   };
   if (R && R.ids.includes(p.id)) {
     const imp = R.impostors.includes(p.id);
     st.inRound = true;
-    st.role = imp ? { imp: true, hint: G.settings.hint ? R.group : null, many: G.settings.impostors > 1 } : { imp: false, word: R.word, cat: R.emoji + ' ' + R.catName };
+    st.role = imp && R.gmode !== 'double' ? { imp: true, hint: G.settings.hint ? R.group : null, many: G.settings.impostors > 1 }
+      : { imp: false, word: imp ? R.fake : R.word, cat: R.emoji + ' ' + R.catName };
     st.seen = R.seen.includes(p.id); st.seenCount = R.seen.length; st.total = R.ids.length;
     st.starter = R.starter; st.ids = R.ids; st.myVote = R.ballots[p.id] || null; st.voteCount = Object.keys(R.ballots).length;
     if (G.phase === 'result') {
       st.step = R.res.step; st.accused = R.res.accused; st.tie = R.res.tie;
       if (R.res.step !== 'accused') { st.impostors = R.impostors; st.troll = R.troll; }
-      if (R.res.step === 'impostors' && imp && !R.troll) { st.options = R.options; st.myPick = R.picks[p.id] || null; }
+      if (R.res.step === 'impostors' && imp && !R.troll && R.gmode !== 'double') { st.options = R.options; st.myPick = R.picks[p.id] || null; }
+      if (R.res.step !== 'accused' && R.gmode === 'double') st.fake = R.fake;
       if (R.res.step === 'word') { st.word = R.troll ? '' : R.word; st.headline = R.res.headline; }
     }
   }

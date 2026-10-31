@@ -20,6 +20,17 @@ Test lokalny trybu wielu telefonów w jednej przeglądarce: `tv.html` w jednej k
 6. **Głosowanie** (domyślnie 30 s): na trzy wszyscy wskazują podejrzanego, a host zaznacza przy każdym graczu, kogo wskazał. Na TV na żywo rosną paski z awatarami głosujących.
 7. **Wynik**: werbel → kogo wyrzucono → pieczątka „BYŁ / NIE BYŁ IMPOSTOREM” → na TV pojawia się 10 słów (prawdziwe + 9 podobnych z tej samej grupy), impostor wybiera jedno, a host zaznacza je na telefonie → słowo na TV → punkty → tabela.
 
+### Tryby gry
+- **🎯 Klasyczny**: impostor nie zna słowa (może dostać podpowiedź).
+- **🎭 Podwójny agent**: impostor dostaje *podobne* słowo (np. „kot” zamiast „pies”) i **nie wie**, że jest impostorem.
+- **⚡ Błyskawica**: 45 s dyskusji i 15 s głosowania.
+- **🏁 Gra do X punktów** (10/15/20): kto pierwszy dobije, wygrywa. Na TV pojawia się podium z koroną.
+
+### Dźwięki, emoji i reakcje
+- Telewizor gra muzykę w lobby, werbel przy głosowaniu, tyka w ostatnich 10 s, gra fanfary albo „wah wah”. Dźwięki generuje przeglądarka, bez plików. Przycisk 🔊 jest w prawym górnym rogu (pilotem: strzałka w górę → OK). Przeglądarka włączy dźwięk dopiero po pierwszym naciśnięciu OK albo kliknięciu.
+- Każdy gracz ma awatar emoji. W trybie jednego telefonu zmieniasz go, klikając awatar, a w trybie wielu telefonów wybiera go gracz.
+- W trybie „każdy swój telefon” na dole telefonu jest pasek reakcji 😂😱🤔🔥. Wysłane reakcje wylatują na telewizorze.
+
 ### Tryb trolla 🤡
 Ustawiasz szansę (10/20/35%), że w danej rundzie **wszyscy** są impostorami. W głosowaniu jest dodatkowa opcja „To troll – wszyscy!”.
 

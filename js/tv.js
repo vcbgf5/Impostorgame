@@ -5,7 +5,9 @@ const stage = document.getElementById('stage');
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const ini = n => esc((n || '?').trim().charAt(0).toUpperCase());
 const fmt = ms => { const s = Math.ceil(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
-const av = (p, cls = '', style = '') => p ? `<div class="av ${cls}" style="--c:${p.color};${style}">${ini(p.name)}</div>` : '';
+const av = (p, cls = '', style = '') => p ? `<div class="av ${cls} ${p.emoji ? 'emo' : ''}" style="--c:${p.color};${style}">${p.emoji || ini(p.name)}</div>` : '';
+const SFX = (n, d) => { if (window.Sfx) Sfx.play(n, d); };
+const GM = { classic: '🎯 Klasyczny', double: '🎭 Podwójny agent', blitz: '⚡ Błyskawica' };
 
 let S = null, recvAt = 0, scene = '', known = new Set(), loops = [];
 const senders = [];
@@ -26,6 +28,13 @@ const TV = window.TV = {
     if (TV.mode === 'multi') return;
     if (TV.mode !== 'single') TV.setMode('single', true);
     S = m.state; recvAt = performance.now(); draw();
+  },
+  react(p, e) {
+    const el = document.createElement('div'); el.className = 'react';
+    el.style.cssText = `left:${6 + Math.random() * 84}%;--c:${p.color};--dx:${(Math.random() - .5) * 12}rem`;
+    el.innerHTML = `<b>${esc(e)}</b><span>${p.emoji ? esc(p.emoji) + ' ' : ''}${esc(p.name)}</span>`;
+    document.body.appendChild(el); SFX('react');
+    setTimeout(() => el.remove(), 4200);
   },
   // stan z lokalnego silnika gry (tryb „każdy swój telefon”)
   local(st) { if (TV.mode !== 'multi') return; S = st; recvAt = performance.now(); draw(); },
@@ -57,6 +66,7 @@ function every(ms, fn) { const t = setInterval(fn, ms); loops.push(t); fn(); }
 function clearLoops() { loops.forEach(clearInterval); loops = []; }
 
 /* ---------- zegar ---------- */
+let lastTickSec = -1;
 function timerLeft() {
   const t = S && S.timer; if (!t) return 0;
   return t.running ? Math.max(0, t.left - (performance.now() - recvAt)) : t.left;
@@ -66,6 +76,9 @@ setInterval(() => {
   const left = timerLeft(), frac = S.timer.total ? left / (S.timer.total * 1000) : 0;
   stage.querySelectorAll('.tv-timer').forEach(el => { el.textContent = fmt(left); el.classList.toggle('low', left < 10000 && left > 0); });
   stage.querySelectorAll('.tv-ring').forEach(el => { el.style.strokeDashoffset = String(100 - Math.max(0, Math.min(1, frac)) * 100); el.classList.toggle('low', left < 10000); });
+  const sec = Math.ceil(left / 1000);
+  if (S.timer.running && left > 0 && sec <= 10 && sec !== lastTickSec && (scene === 'discuss' || scene === 'vote')) SFX(sec <= 3 ? 'tock' : 'tick');
+  lastTickSec = sec;
 }, 200);
 const ring = (cls = '') => `<div class="ringbox ${cls}"><svg viewBox="0 0 120 120"><circle class="rbg" cx="60" cy="60" r="52"/><circle class="rfg tv-ring" cx="60" cy="60" r="52" pathLength="100"/></svg><div class="tv-timer">${S.timer ? fmt(timerLeft()) : '∞'}</div></div>`;
 
@@ -218,9 +231,10 @@ const SCENES = {
       <div class="toprow">${stamp}
         <div class="late imp-col"><div class="kicker">${imps.length > 1 ? 'Impostorami byli' : 'Impostorem był'}</div>
         <div class="imps">${imps.map((p, i) => `<div class="imp-card red" style="animation-delay:${1.6 + i * .2}s">${av(p, 'lg')}<span>${esc(p.name)}</span></div>`).join('')}</div></div></div>
-      <div class="lastchance late2">🎯 Ostatnia szansa! ${MULTI() ? 'Impostorze, wybierz słowo na swoim telefonie' : 'Impostorze, które to słowo?'}</div>
+      ${res.fake ? `<div class="lastchance late2">🎭 Podwójny agent! Impostor miał słowo: <b class="fake">${esc(res.fake)}</b></div>`
+        : `<div class="lastchance late2">🎯 Ostatnia szansa! ${MULTI() ? 'Impostorze, wybierz słowo na swoim telefonie' : 'Impostorze, które to słowo?'}</div>
       ${optGrid(res, false)}
-      ${MULTI() ? `<div class="row-c late2">${ring('xs')}${btn('showWord', '', 'Pokaż słowo ⏭', 'ghost sm')}</div>` : ''}</div>`;
+      ${MULTI() ? `<div class="row-c late2">${ring('xs')}${btn('showWord', '', 'Pokaż słowo ⏭', 'ghost sm')}</div>` : ''}`}</div>`;
   },
 
   'res-word': () => {
@@ -231,6 +245,7 @@ const SCENES = {
     const gained = S.players.filter(p => p.delta > 0);
     return `<div class="scene center wordscene">
       ${word}
+      ${res.fake ? `<div class="fakeline">🎭 Impostor miał: <b>${esc(res.fake)}</b></div>` : ''}
       <div class="headline">${esc(res.headline)}</div>
       ${res.options && res.options.length && Object.keys(res.picks || {}).length ? optGrid(res, true) : ''}
       ${guessed.length ? `<div class="guessed">🎯 ${guessed.map(p => esc(p.name)).join(', ')} ${guessed.length > 1 ? 'zgadli' : 'zgadł'} słowo! +2</div>` : ''}
@@ -240,6 +255,18 @@ const SCENES = {
 
   scores: () => {
     const list = [...S.players].sort((a, b) => b.score - a.score);
+    if (S.final && S.final.length) {
+      const w = S.final.map(P).filter(Boolean), pod = list.slice(0, 3);
+      const order = [pod[1], pod[0], pod[2]].filter(Boolean);
+      return `<div class="scene center final">
+        <div class="kicker">Koniec gry!</div>
+        <div class="title glitch" data-t="ZWYCIĘZCA">${w.length > 1 ? 'ZWYCIĘZCY' : 'ZWYCIĘZCA'}</div>
+        <div class="podium">${order.map(p => { const place = list.indexOf(p) + 1; return `<div class="pod p${place}">
+          ${place === 1 ? '<div class="crown">👑</div>' : ''}${av(p, place === 1 ? 'lg' : 'md')}<b>${esc(p.name)}</b><span>${p.score} pkt</span>
+          <div class="block">${place}</div></div>`; }).join('')}</div>
+        ${MULTI() ? `<div class="mactions c">${btn('lobby', '', '⚙️ Ustawienia', 'ghost')}${btn('newGame', '', '🔄 Nowa gra', 'primary big', 'data-focus')}</div>`
+          : '<div class="footer"><span class="pulse">Host: nowa gra?</span></div>'}</div>`;
+    }
     const max = Math.max(1, ...list.map(p => p.score));
     return `<div class="scene scores">
       <div class="title">🏆 Tabela wyników</div><div class="kicker">po rundzie ${S.round}</div>
@@ -270,6 +297,7 @@ const UPDATE = {
     stage.querySelector('#pc').textContent = S.players.length ? `(${S.players.length})` : '';
     const st = S.settings, cats = st.cats.length === st.allCats ? ['🎲 Wszystkie kategorie'] : st.cats;
     stage.querySelector('#ls').innerHTML = [
+      GM[st.gmode] || '', st.goal ? `🏁 Gra do ${st.goal} pkt` : '',
       `🕵️ Impostorów: ${st.impostors}`, st.hint ? '💡 Z podpowiedzią' : '🚫 Bez podpowiedzi',
       st.troll ? `🤡 Troll ${st.troll}%` : '', `⏱️ Dyskusja: ${st.discuss ? st.discuss / 60 + ' min' : 'bez limitu'}`, `🗳️ Głosowanie: ${st.vote} s`,
       ...cats.slice(0, 8), cats.length > 8 ? `+${cats.length - 8} kategorii` : '',
@@ -311,6 +339,8 @@ UPDATE.mlobby = () => {
     btn('set', 'troll', `🤡 Troll: <b>${st.troll ? st.troll + '%' : 'wył'}</b>`, 'opt'),
     btn('set', 'discuss', `⏱️ Dyskusja: <b>${st.discuss ? st.discuss / 60 + ' min' : '∞'}</b>`, 'opt'),
     btn('set', 'vote', `🗳️ Głosowanie: <b>${st.vote} s</b>`, 'opt'),
+    btn('set', 'gmode', `Tryb: <b>${GM[st.gmode] || GM.classic}</b>`, 'opt wide'),
+    btn('set', 'goal', `🏁 Gra do: <b>${st.goal ? st.goal + ' pkt' : '∞'}</b>`, 'opt'),
   ].join('');
   const on = (st.catList || []).filter(c => c.on);
   stage.querySelector('#cc').textContent = `(${on.length}/${(st.catList || []).length} · ${on.reduce((s, c) => s + c.n, 0)} słów)`;
@@ -346,10 +376,13 @@ const MOUNT = {
       i++;
     });
   },
-  discuss() { let i = 0; const el = stage.querySelector('#tip'); every(6000, () => { el.innerHTML = `<span>${TIPS[i++ % TIPS.length]}</span>`; }); },
-  'res-word'() { const res = S.R.res; if (res.troll || res.wasImp) confetti(); else flash(); },
-  'res-impostors'() { if (S.R.res.troll) confetti(); },
-  scores() { confetti(40); },
+  discuss() { SFX('whoosh'); let i = 0; const el = stage.querySelector('#tip'); every(6000, () => { el.innerHTML = `<span>${TIPS[i++ % TIPS.length]}</span>`; }); },
+  'res-word'() { const res = S.R.res; if (res.troll || res.wasImp) { confetti(); SFX('fanfare'); } else { flash(); SFX('wah'); } },
+  'res-impostors'() { const r = S.R.res; if (r.troll) { confetti(); SFX('clown'); } else if (r.fake) SFX('reveal', 1.3); else { if (r.accused && r.accused !== 'troll') SFX('stamp', 0.3); SFX('reveal', 1.5); } },
+  'res-accused'() { SFX('drum'); },
+  scores() { if (S.final && S.final.length) { confetti(160); setTimeout(() => confetti(120), 1500); SFX('win'); } else { confetti(40); SFX('reveal'); } },
+  ready() { SFX('ding'); },
+  vote() { SFX('blip'); },
 };
 
 function sceneKey() {
@@ -369,7 +402,9 @@ function draw() {
   const fk = k + (k === 'reveal' ? (R.peek || R.idx) + R.stage : '') + (S ? S.round : '');
   const fkey = focusKey();
   if (fk !== fullKey) {
+    if ((k === 'reveal' || k === 'mreveal') && scene !== 'wait') SFX('whoosh');
     fullKey = fk; scene = k; clearLoops();
+    if (window.Sfx) Sfx.music(['mode', 'wait', 'lobby', 'mlobby'].includes(k));
     stage.innerHTML = SCENES[k]();
     stage.firstElementChild.classList.add('enter');
     if (MOUNT[k]) MOUNT[k]();
@@ -377,11 +412,26 @@ function draw() {
     restoreFocus(null);
   } else if (UPDATE[scene]) { UPDATE[scene](); restoreFocus(fkey); }
   showToast(S && S.msg);
+  eventSounds();
+}
+// dźwięki zdarzeń: ktoś dołączył, ktoś zobaczył słowo, ktoś zagłosował / wybrał słowo
+let ev = { players: -1, seen: -1, votes: -1, picks: -1, round: -1 };
+function eventSounds() {
+  if (!S) return;
+  const R = S.R || {}, res = R.res || {};
+  const now = { players: S.players.length, seen: (R.seen || []).length, votes: Object.keys(R.ballots || {}).length, picks: Object.keys(res.picks || {}).length, round: S.round };
+  if (now.round === ev.round) {
+    if (now.players > ev.players && ev.players >= 0) SFX('pop');
+    if (now.seen > ev.seen && ev.seen >= 0) SFX('ding');
+    if (now.votes > ev.votes && ev.votes >= 0) SFX('blip');
+    if (now.picks > ev.picks && ev.picks >= 0) SFX('blip');
+  }
+  ev = now;
 }
 
 /* ---------- pilot: strzałki + OK ---------- */
 const NAV = '.tvbtn';
-const focusables = () => [...stage.querySelectorAll(NAV)].filter(el => !el.disabled && el.offsetParent !== null);
+const focusables = () => [...document.querySelectorAll(NAV)].filter(el => !el.disabled && el.offsetParent !== null);
 function focusKey() { const a = document.activeElement; return a && a.matches && a.matches(NAV) ? a.dataset.act + '|' + a.dataset.arg : null; }
 function restoreFocus(key) {
   const els = focusables(); if (!els.length) return;
@@ -420,10 +470,11 @@ document.addEventListener('keydown', e => {
     if (scene === 'wait' || scene === 'mlobby') TV.setMode(null);
   }
 });
-stage.addEventListener('click', e => {
+document.addEventListener('click', e => {
   const b = e.target.closest('[data-act]'); if (!b) return;
   const act = b.dataset.act, arg = b.dataset.arg;
-  if (act === 'mode') TV.setMode(arg || null);
+  if (act === 'mute') { if (window.Sfx) Sfx.toggle(); }
+  else if (act === 'mode') TV.setMode(arg || null);
   else if (window.TVGame) TVGame.action(act, arg);
 });
 let curT = null;
@@ -448,7 +499,13 @@ function confetti(n = 90) {
 }
 function flash() { const f = document.createElement('div'); f.className = 'redflash'; stage.appendChild(f); setTimeout(() => f.remove(), 1800); }
 
+// przycisk dźwięku (pilotem: strzałka w górę do prawego rogu → OK)
+const muteBtn = document.createElement('button');
+muteBtn.className = 'tvbtn ghost sm mute'; muteBtn.dataset.act = 'mute'; muteBtn.dataset.arg = '';
+document.body.appendChild(muteBtn);
+const muteTxt = () => { muteBtn.textContent = !window.Sfx ? '' : Sfx.muted ? '🔇 Dźwięk wył.' : Sfx.locked ? '🔈 OK = włącz dźwięk' : '🔊'; };
+muteTxt(); if (window.Sfx) Sfx.onChange(muteTxt); setInterval(muteTxt, 2000);
 // po starcie: tryb z adresu (?mode=multi / ?mode=single), inaczej ekran wyboru
-{ const m = new URLSearchParams(location.search).get('mode'); if (m === 'multi' || m === 'single') setTimeout(() => TV.setMode(m), 0); }
+{ const m = new URLSearchParams(location.search).get('mode'); if (m === 'multi' || m === 'single') document.addEventListener('DOMContentLoaded', () => TV.setMode(m)); }
 draw();
 })();

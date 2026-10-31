@@ -16,6 +16,8 @@ const fmt = ms => { const s = Math.ceil(ms / 1000); return Math.floor(s / 60) + 
 const vib = p => { try { navigator.vibrate && navigator.vibrate(p); } catch (e) {} };
 const COLORS = ['#ff4d6d', '#4dabf7', '#51cf66', '#fcc419', '#cc5de8', '#ff922b', '#20c997', '#f06595', '#5c7cfa', '#94d82d', '#22b8cf', '#e599f7', '#ffa8a8', '#74c0fc', '#ffd43b', '#b197fc'];
 const MAX_PLAYERS = 16;
+const EMOJI = ['🐱', '🐶', '🦊', '🐼', '🐸', '🐵', '🦁', '🐯', '🐷', '🐨', '🐙', '🦄', '🐲', '👽', '🤖', '👻', '🎃', '🤠', '😎', '🥸', '🦖', '🐧', '🦉', '🐝'];
+const GMODES = { classic: 'Klasyczny', double: 'Podwójny agent', blitz: 'Błyskawica' };
 const store = {
   get(k, d) { try { const v = localStorage.getItem('imp_' + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
   set(k, v) { try { localStorage.setItem('imp_' + k, JSON.stringify(v)); } catch (e) {} },
@@ -24,11 +26,16 @@ const store = {
 /* ---------- stan ---------- */
 const S = {
   players: store.get('players', []),
-  settings: Object.assign({ cats: null, impostors: 1, hint: true, troll: 0, discuss: 180, vote: 30 }, store.get('settings', {})),
+  settings: Object.assign({ cats: null, impostors: 1, hint: true, troll: 0, discuss: 180, vote: 30, gmode: 'classic', goal: 0 }, store.get('settings', {})),
+  final: null,
   phase: 'setup', round: 0, R: null, timer: null, showForgot: false,
 };
+S.players.forEach(p => { if (!p.emoji) p.emoji = EMOJI[Math.floor(Math.random() * EMOJI.length)]; });
 const save = () => { store.set('players', S.players); store.set('settings', S.settings); };
 const player = id => S.players.find(p => p.id === id);
+const nextEmoji = () => { const used = new Set(S.players.map(p => p.emoji)); return pick(EMOJI.filter(e => !used.has(e))) || pick(EMOJI); };
+// Błyskawica: krótka dyskusja i szybkie głosowanie
+const dur = k => S.settings.gmode === 'blitz' ? (k === 'discuss' ? 45 : 15) : S.settings[k];
 const nextColor = () => { const used = new Set(S.players.map(p => p.color)); return COLORS.find(c => !used.has(c)) || pick(COLORS); };
 
 /* ---------- słowa z GitHuba ---------- */
@@ -100,8 +107,10 @@ function startRound() {
   const options = shuffle([it.w, ...same.slice(0, 9), ...rest.slice(0, Math.max(0, 9 - same.length))]);
   const ids = S.players.map(p => p.id);
   const n = ids.length;
-  const troll = S.settings.troll > 0 && Math.random() * 100 < S.settings.troll;
+  const gmode = S.settings.gmode || 'classic';
+  const troll = gmode !== 'double' && S.settings.troll > 0 && Math.random() * 100 < S.settings.troll;
   const k = clamp(S.settings.impostors, 1, n - 1);
+  const fake = gmode === 'double' ? (same[0] || rest[0] || '???') : null;
   const impostors = troll ? [...ids] : shuffle(ids).slice(0, k);
   const off = S.round % n;
   const order = [...ids.slice(off), ...ids.slice(0, off)];
@@ -112,14 +121,15 @@ function startRound() {
     word: it.w, group: it.g, catName: it.c.name, emoji: it.c.emoji,
     impostors, troll, order, idx: 0, stage: 'pass', seen: false, peek: null,
     starter: pick(crew.length ? crew : ids), votes: {}, guessed: [], res: null,
-    options, picks: {}, pickFor: impostors[0],
+    options, picks: {}, pickFor: impostors[0], gmode, fake,
   };
+  S.final = null;
   S.timer = null; S.showForgot = false; S.phase = 'reveal';
   wake(); render();
 }
 function goVote() {
   S.phase = 'vote'; S.R.votes = {}; S.R.ballots = {};
-  S.timer = mkTimer(S.settings.vote, () => render());
+  S.timer = mkTimer(dur('vote'), () => render());
   render();
 }
 function endVote() {
@@ -154,6 +164,8 @@ function applyPoints() {
     }
     R.guessed.forEach(i => add(i, 2));
   }
+  const goal = S.settings.goal, top = Math.max(0, ...S.players.map(p => p.score));
+  S.final = goal && top >= goal ? S.players.filter(p => p.score === top).map(p => p.id) : null;
   save();
 }
 
@@ -166,6 +178,9 @@ const ACT = {
   noCats: () => { S.settings.cats = []; save(); render(); },
   imp: d => { S.settings.impostors = clamp(S.settings.impostors + Number(d), 1, Math.max(1, S.players.length - 1)); save(); render(); },
   hint: () => { S.settings.hint = !S.settings.hint; save(); render(); },
+  setS: arg => { const [k, v] = arg.split(':'); S.settings[k] = v; save(); render(); },
+  emo: id => { const p = player(id); if (!p) return; const used = new Set(S.players.map(q => q.emoji)); let i = EMOJI.indexOf(p.emoji); do { i = (i + 1) % EMOJI.length; } while (used.has(EMOJI[i]) && EMOJI[i] !== p.emoji); p.emoji = EMOJI[i]; save(); render(); },
+  newGame: () => { S.players.forEach(p => { p.score = 0; p.delta = 0; }); S.final = null; save(); ACT.lobby(); },
   set: arg => { const [k, v] = arg.split(':'); S.settings[k] = Number(v); save(); render(); },
   start: startRound,
   iam: () => { S.R.stage = 'look'; S.R.seen = false; render(); },
@@ -177,7 +192,7 @@ const ACT = {
     if (R.idx >= R.order.length) S.phase = 'ready';
     render();
   },
-  discuss: () => { S.phase = 'discuss'; S.timer = S.settings.discuss ? mkTimer(S.settings.discuss, goVote) : null; render(); },
+  discuss: () => { S.phase = 'discuss'; S.timer = dur('discuss') ? mkTimer(dur('discuss'), goVote) : null; render(); },
   pause: () => { S.timer && S.timer.running ? pauseTimer() : resumeTimer(); render(); },
   plus30: () => { const t = S.timer; if (!t) return; t.left = timerLeft() + 30000; t.total += 30; t.done = false; if (t.running) t.endsAt = Date.now() + t.left; render(); },
   forgot: () => { S.showForgot = !S.showForgot; render(); },
@@ -223,13 +238,13 @@ app.addEventListener('submit', e => {
   if (!name) return;
   if (S.players.length >= MAX_PLAYERS) return alert('Maksymalnie ' + MAX_PLAYERS + ' graczy.');
   if (S.players.some(p => p.name.toLowerCase() === name.toLowerCase())) return alert('Taki gracz już jest.');
-  S.players.push({ id: uid(), name, color: nextColor(), score: 0, delta: 0 });
+  S.players.push({ id: uid(), name, color: nextColor(), emoji: nextEmoji(), score: 0, delta: 0 });
   save(); render();
   const ni = app.querySelector('#nameIn'); if (ni) ni.focus();
 });
 
 /* ---------- widoki ---------- */
-const av = (p, cls = '') => `<span class="av ${cls}" style="--c:${p.color}">${ini(p.name)}</span>`;
+const av = (p, cls = '') => `<span class="av ${cls} ${p.emoji ? 'emo' : ''}" style="--c:${p.color}">${p.emoji || ini(p.name)}</span>`;
 const seg = (label, key, opts, cur, note = '') => `
   <div class="set"><div class="set-l">${label}${note ? `<small>${note}</small>` : ''}</div>
   <div class="seg">${opts.map(([v, t]) => `<button class="${cur === v ? 'on' : ''}" data-act="set" data-arg="${key}:${v}">${t}</button>`).join('')}</div></div>`;
@@ -250,7 +265,7 @@ function vSetup() {
       <button class="btn">Dodaj</button>
     </form>
     <ul class="players">${S.players.map((p, i) => `
-      <li>${av(p)}<span class="pname">${esc(p.name)}</span><span class="pts">${p.score} pkt</span>
+      <li><button class="emo-btn" data-act="emo" data-arg="${p.id}" title="Zmień emoji">${av(p)}</button><span class="pname">${esc(p.name)}</span><span class="pts">${p.score} pkt</span>
       ${i ? `<button class="icon" data-act="mvPlayer" data-arg="${p.id}" title="W górę">↑</button>` : '<span class="icon ph"></span>'}
       <button class="icon x" data-act="rmPlayer" data-arg="${p.id}" title="Usuń">✕</button></li>`).join('')}
     </ul>
@@ -268,6 +283,9 @@ function vSetup() {
 
   <section class="card">
     <h2>⚙️ Zasady</h2>
+    <div class="set"><div class="set-l">Tryb gry<small>${{ classic: 'Impostor nie zna słowa', double: 'Impostor dostaje PODOBNE słowo i nie wie, że jest impostorem', blitz: '45 s dyskusji, 15 s głosowania' }[st.gmode]}</small></div>
+      <div class="seg">${Object.entries(GMODES).map(([v, t]) => `<button class="${st.gmode === v ? 'on' : ''}" data-act="setS" data-arg="gmode:${v}">${t}</button>`).join('')}</div></div>
+    ${seg('Gra do', 'goal', [[0, '∞'], [10, '10 pkt'], [15, '15 pkt'], [20, '20 pkt']], st.goal, 'Kto pierwszy zdobędzie tyle punktów, wygrywa')}
     <div class="set"><div class="set-l">Liczba impostorów</div>
       <div class="stepper"><button data-act="imp" data-arg="-1">−</button><b>${st.impostors}</b><button data-act="imp" data-arg="1">+</button></div></div>
     <div class="set"><div class="set-l">Podpowiedź dla impostora<small>Impostor zobaczy ogólne hasło, np. „owoc”</small></div>
@@ -297,6 +315,7 @@ function vSetup() {
 
 function secretHTML(id) {
   const R = S.R;
+  if (R.gmode === 'double' && R.impostors.includes(id)) return `<div class="role crew"><span>Twoje słowo:</span><b class="word">${esc(R.fake)}</b><small>${R.emoji} ${esc(R.catName)}</small></div>`;
   if (R.impostors.includes(id)) {
     return `<div class="role imp"><div class="role-ico">🕵️</div><b>JESTEŚ IMPOSTOREM</b>
       ${S.settings.hint ? `<span>Podpowiedź:</span><em>${esc(R.group)}</em>` : '<span>Bez podpowiedzi — blefuj!</span>'}
@@ -388,6 +407,11 @@ function vResult() {
   if (res.step === 'impostors') {
     if (R.troll) return `<div class="center"><div class="big-emoji pop">🤡</div><h1>TROLL!</h1><p>Wszyscy byli impostorami.</p>
       <button class="btn big primary" data-act="showWord">Podsumuj rundę ➜</button></div>`;
+    if (R.gmode === 'double') return `<div class="center">
+      <div class="step">Podwójny agent</div>
+      <div class="row wrap cen">${imps.map(p => `<span class="tag">${av(p, 'sm')} ${esc(p.name)}</span>`).join('')}</div>
+      <p>Impostor miał podobne słowo: <b class="hl">${esc(R.fake)}</b></p>
+      <button class="btn big primary" data-act="showWord">📺 Pokaż prawdziwe słowo</button></div>`;
     return `<div class="center">
       <div class="step">Impostor${imps.length > 1 ? 'zy' : ''}</div>
       <div class="row wrap cen">${imps.map(p => `<span class="tag">${av(p, 'sm')} ${esc(p.name)}</span>`).join('')}</div>
@@ -406,9 +430,10 @@ function vResult() {
 function vScores() {
   const list = [...S.players].sort((a, b) => b.score - a.score);
   return `<div class="center">
-    <div class="step">Po rundzie ${S.round}</div><h1>🏆 Wyniki</h1>
+    <div class="step">Po rundzie ${S.round}</div><h1>${S.final ? '🏆 KONIEC GRY!' : '🏆 Wyniki'}</h1>
+    ${S.final ? `<p class="big-emoji pop">👑</p><h2>Wygrywa: ${S.final.map(player).filter(Boolean).map(p => `${av(p, 'sm')} ${esc(p.name)}`).join(', ')}</h2>` : ''}
     <ol class="board">${list.map(p => `<li>${av(p, 'sm')}<span class="pname">${esc(p.name)}</span>${p.delta ? `<i>+${p.delta}</i>` : ''}<b>${p.score}</b></li>`).join('')}</ol>
-    <button class="btn big primary" data-act="next">▶ Następna runda</button>
+    ${S.final ? '<button class="btn big primary" data-act="newGame">🔄 Nowa gra (od zera)</button>' : '<button class="btn big primary" data-act="next">▶ Następna runda</button>'}
     <button class="btn ghost" data-act="lobby">⚙️ Lobby / ustawienia</button></div>`;
 }
 
@@ -456,8 +481,9 @@ function pub() {
   const R = S.R;
   const st = {
     phase: S.phase, round: S.round,
-    players: S.players.map(p => ({ id: p.id, name: p.name, color: p.color, score: p.score, delta: p.delta || 0 })),
-    settings: { cats: selCats().map(c => c.emoji + ' ' + c.name), allCats: DB.cats.length, impostors: S.settings.impostors, hint: S.settings.hint, troll: S.settings.troll, discuss: S.settings.discuss, vote: S.settings.vote },
+    players: S.players.map(p => ({ id: p.id, name: p.name, color: p.color, emoji: p.emoji, score: p.score, delta: p.delta || 0 })),
+    settings: { cats: selCats().map(c => c.emoji + ' ' + c.name), allCats: DB.cats.length, impostors: S.settings.impostors, hint: S.settings.hint, troll: S.settings.troll, discuss: dur('discuss'), vote: dur('vote'), gmode: S.settings.gmode, goal: S.settings.goal },
+    final: S.phase === 'scores' ? S.final : null,
     timer: S.timer ? { total: S.timer.total, left: timerLeft(), running: S.timer.running } : null,
   };
   if (R) {
@@ -465,7 +491,7 @@ function pub() {
     if (S.phase === 'result') {
       const res = R.res;
       st.R.res = { step: res.step, accused: res.accused, tie: res.tie };
-      if (res.step !== 'accused') Object.assign(st.R.res, { impostors: R.impostors, troll: R.troll, wasImp: !!res.accused && R.impostors.includes(res.accused), options: R.troll ? [] : R.options, picks: R.picks });
+      if (res.step !== 'accused') Object.assign(st.R.res, { impostors: R.impostors, troll: R.troll, wasImp: !!res.accused && R.impostors.includes(res.accused), options: R.troll || R.gmode === 'double' ? [] : R.options, picks: R.picks, fake: R.fake });
       if (res.step === 'word') Object.assign(st.R.res, { word: R.troll ? '' : R.word, cat: R.emoji + ' ' + R.catName, group: R.group, guessed: R.guessed, headline: res.headline });
     }
   }

@@ -290,3 +290,26 @@ body.nocur{cursor:none}
 .sg.just{animation:bounceIn .5s both}
 .sg.ok i{color:var(--ok)}
 .sg.off{opacity:.45}
+
+/* ---------- emoji, reakcje, dźwięk, zwycięzca ---------- */
+.av.emo{font-size:1.9rem;line-height:1}
+.av.sm.emo{font-size:1.35rem}.av.md.emo{font-size:2.2rem}.av.lg.emo{font-size:3.6rem}.av.huge.emo{font-size:6rem}.av.xs.emo{font-size:.95rem}
+.mute{position:fixed;top:1rem;right:1.2rem;z-index:30;opacity:.75}
+.mute:focus{opacity:1}
+.setgrid .opt.wide{grid-column:span 1}
+.fake{color:#fff;font-size:2.2rem;margin-left:.4rem}
+.react{position:fixed;bottom:-6rem;z-index:25;display:flex;flex-direction:column;align-items:center;pointer-events:none;animation:floatUp 4s cubic-bezier(.2,.6,.3,1) forwards}
+.react b{font-size:5rem;filter:drop-shadow(0 .4rem 1rem #0008)}
+.react span{font-size:1rem;font-weight:800;background:var(--c);color:#14112e;padding:.15rem .7rem;border-radius:99rem;margin-top:-.4rem}
+@keyframes floatUp{0%{transform:translate(0,0) scale(.4);opacity:0}12%{opacity:1;transform:translate(calc(var(--dx)*.2),-12vh) scale(1.15)}70%{opacity:1}100%{transform:translate(var(--dx),-85vh) scale(.9);opacity:0}}
+.final{gap:.6rem}
+.podium{display:flex;align-items:flex-end;gap:1.6rem;margin:1rem 0 .6rem}
+.pod{display:flex;flex-direction:column;align-items:center;gap:.4rem;animation:rise .8s both}
+.pod b{font-size:1.6rem}.pod span{color:var(--mut);font-size:1.2rem}
+.pod .block{width:11rem;border-radius:1rem 1rem 0 0;display:flex;align-items:flex-start;justify-content:center;padding-top:.6rem;font-size:3rem;font-weight:900;background:linear-gradient(180deg,#ffffff22,#ffffff08);border:2px solid #ffffff22}
+.pod.p1{animation-delay:1s}.pod.p2{animation-delay:.5s}.pod.p3{animation-delay:0s}
+.pod.p1 .block{height:13rem;background:linear-gradient(180deg,#ffc53d88,#ffc53d22);border-color:#ffc53d}
+.pod.p2 .block{height:9rem;background:linear-gradient(180deg,#c0c8e088,#c0c8e022)}
+.pod.p3 .block{height:6rem;background:linear-gradient(180deg,#cd7f3288,#cd7f3222)}
+.crown{font-size:4rem;animation:float 2s ease-in-out infinite,bounceIn .8s 1.6s both}
+.fakeline{font-size:1.7rem;color:var(--warn);animation:rise .6s .5s both}.fakeline b{color:#fff}
