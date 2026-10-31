@@ -11,8 +11,8 @@ Jeden telefon (host) krąży między graczami, a laptop podłączony do telewizo
    - Załoga widzi słowo i kategorię.
    - Impostor widzi „JESTEŚ IMPOSTOREM” i, jeśli host włączył podpowiedź, ogólne hasło (np. słowo „banan” → podpowiedź „owoc”).
 5. **Dyskusja**: z czasem (1–5 min) albo bez limitu. Na TV jest odliczanie i kolejność mówienia. Opcja „Ktoś zapomniał słowa?” pozwala komuś podejrzeć słowo jeszcze raz.
-6. **Głosowanie** (domyślnie 30 s): na trzy wszyscy wskazują podejrzanego, a host wpisuje głosy przyciskami +/−. Na TV na żywo rosną paski.
-7. **Wynik**: werbel → kogo wyrzucono → pieczątka „BYŁ / NIE BYŁ IMPOSTOREM” → impostor ma ostatnią szansę zgadnąć słowo → słowo na TV → punkty → tabela.
+6. **Głosowanie** (domyślnie 30 s): na trzy wszyscy wskazują podejrzanego, a host zaznacza przy każdym graczu, kogo wskazał. Na TV na żywo rosną paski z awatarami głosujących.
+7. **Wynik**: werbel → kogo wyrzucono → pieczątka „BYŁ / NIE BYŁ IMPOSTOREM” → na TV pojawia się 10 słów (prawdziwe + 9 podobnych z tej samej grupy), impostor wybiera jedno, a host zaznacza je na telefonie → słowo na TV → punkty → tabela.
 
 ### Tryb trolla 🤡
 Ustawiasz szansę (10/20/35%), że w danej rundzie **wszyscy** są impostorami. W głosowaniu jest dodatkowa opcja „To troll – wszyscy!”.
@@ -20,10 +20,10 @@ Ustawiasz szansę (10/20/35%), że w danej rundzie **wszyscy** są impostorami. 
 ### Punkty
 | Sytuacja | Punkty |
 |---|---|
-| Złapaliście impostora | +1 dla każdego z załogi |
+| Impostor wyeliminowany | +1 dla każdego, kto zagłosował na impostora |
 | Impostor niezłapany (lub remis) | +2 dla impostora |
-| Impostor zgadł słowo | +1 dla impostora |
-| Wykryliście rundę trolla | +2 dla wszystkich |
+| Impostor zgadł słowo | +2 dla impostora |
+| Wykryliście rundę trolla (wygrał „troll”) | +1 dla każdego, kto głosował „troll” |
 
 ## Słowa (folder `words/`)
 Około 6000 słów w 26 kategoriach. Każdy plik to jedna kategoria. Nazwa podgrupy jest podpowiedzią dla impostora:

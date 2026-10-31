@@ -57,7 +57,7 @@ const HOW = [
   ['👆', 'Przytrzymaj kafelek', 'Przytrzymaj palcem, aby podnieść kafelek i zobaczyć słowo. Puść — schowa się. Podaj dalej.'],
   ['🕵️', 'Impostor nie zna słowa', 'Zamiast słowa widzi „IMPOSTOR” i czasem małą podpowiedź. Musi blefować!'],
   ['💬', 'Mówcie skojarzenia', 'Po kolei każdy mówi jedno słowo kojarzące się z hasłem. Nie za oczywiste — impostor słucha!'],
-  ['🗳️', 'Głosowanie', 'Na trzy wskażcie podejrzanego. Złapany impostor ma jeszcze szansę zgadnąć słowo.'],
+  ['🗳️', 'Głosowanie', 'Na trzy wskażcie podejrzanego. Potem impostor wybiera słowo z 10 na ekranie — trafi, to +2!'],
   ['🤡', 'Tryb trolla', 'Czasem… WSZYSCY są impostorami. Odważycie się to zgłosić?'],
 ];
 const TIPS = ['Mów jedno skojarzenie — krótko!', 'Nie bądź zbyt oczywisty, impostor słucha 👂', 'Impostorze: udawaj pewność siebie 😎', 'Obserwujcie, kto się waha 🤔', 'Kto mówi za ogólnie? 🧐'];
@@ -84,7 +84,7 @@ const SCENES = {
     <div class="col narrow">
       <div class="panel how"><h3>Jak grać</h3><div id="how" class="how-body"></div><div class="dots" id="howdots"></div></div>
       <div class="panel"><h3>Punkty</h3>
-        <ul class="rules"><li><b>+1</b> każdy z załogi, gdy złapiecie impostora</li><li><b>+2</b> impostor, który nie został złapany</li><li><b>+1</b> impostor, który zgadnie słowo</li><li><b>+2</b> wszyscy, gdy wykryją trolla 🤡</li></ul></div>
+        <ul class="rules"><li><b>+1</b> kto dobrze zagłosował, gdy impostor odpadł</li><li><b>+2</b> impostor, który nie został złapany</li><li><b>+2</b> impostor, który zgadnie słowo</li><li><b>+1</b> kto głosował „troll”, gdy go wykryliście 🤡</li></ul></div>
     </div>
     <div class="footer"><span class="pulse">Host: wciśnij <b>START RUNDY</b> na telefonie</span></div>
     <div class="code-corner">Kod TV: <b class="tv-code">${esc(CODE)}</b></div></div>`,
@@ -135,7 +135,7 @@ const SCENES = {
     if (S.R.trollVote) rows.push({ id: 'troll', html: '<div class="av sm" style="--c:#ffd43b">🤡</div><span>Troll – wszyscy!</span>', c: '#ffd43b' });
     return `<div class="scene vote">
       <div class="vote-head">${ring('md')}<div><div class="title">🗳️ GŁOSOWANIE</div><p class="big-p">Na trzy wskażcie podejrzanego!</p><div class="count321"><span>3</span><span>2</span><span>1</span><span>👉</span></div></div></div>
-      <div class="bars">${rows.map(r => `<div class="bar" data-id="${r.id}"><div class="bl">${r.html}</div><div class="track"><div class="fill" style="--c:${r.c}"></div></div><b class="num">0</b></div>`).join('')}</div></div>`;
+      <div class="bars">${rows.map(r => `<div class="bar" data-id="${r.id}"><div class="bl">${r.html}</div><div class="track"><div class="fill" style="--c:${r.c}"></div><div class="voters"></div></div><b class="num">0</b></div>`).join('')}</div></div>`;
   },
 
   'res-accused': () => {
@@ -162,10 +162,11 @@ const SCENES = {
     const acc = res.accused && res.accused !== 'troll' ? P(res.accused) : null;
     const stamp = acc ? `<div class="verdict">${av(acc, 'md')}<b>${esc(acc.name)}</b><div class="stamp ${res.wasImp ? 'yes' : 'no'}">${res.wasImp ? 'BYŁ IMPOSTOREM' : 'NIE BYŁ IMPOSTOREM'}</div></div>` : '';
     return `<div class="scene center impostors ${res.wasImp ? 'win' : 'lose'}">
-      ${stamp}
-      <div class="kicker late">${imps.length > 1 ? 'Impostorami byli' : 'Impostorem był'}</div>
-      <div class="imps late">${imps.map((p, i) => `<div class="imp-card red" style="animation-delay:${1.6 + i * .2}s">${av(p, 'lg')}<span>${esc(p.name)}</span></div>`).join('')}</div>
-      <div class="lastchance late2">🎯 Ostatnia szansa! Impostorze, zgadnij słowo na głos</div></div>`;
+      <div class="toprow">${stamp}
+        <div class="late imp-col"><div class="kicker">${imps.length > 1 ? 'Impostorami byli' : 'Impostorem był'}</div>
+        <div class="imps">${imps.map((p, i) => `<div class="imp-card red" style="animation-delay:${1.6 + i * .2}s">${av(p, 'lg')}<span>${esc(p.name)}</span></div>`).join('')}</div></div></div>
+      <div class="lastchance late2">🎯 Ostatnia szansa! Impostorze, które to słowo?</div>
+      ${optGrid(res, false)}</div>`;
   },
 
   'res-word': () => {
@@ -177,7 +178,8 @@ const SCENES = {
     return `<div class="scene center wordscene">
       ${word}
       <div class="headline">${esc(res.headline)}</div>
-      ${guessed.length ? `<div class="guessed">🎯 ${guessed.map(p => esc(p.name)).join(', ')} ${guessed.length > 1 ? 'zgadli' : 'zgadł'} słowo! +1</div>` : ''}
+      ${res.options && res.options.length && Object.keys(res.picks || {}).length ? optGrid(res, true) : ''}
+      ${guessed.length ? `<div class="guessed">🎯 ${guessed.map(p => esc(p.name)).join(', ')} ${guessed.length > 1 ? 'zgadli' : 'zgadł'} słowo! +2</div>` : ''}
       <div class="gains">${gained.map((p, i) => `<div class="gain" style="animation-delay:${1 + i * .12}s">${av(p, 'sm')}<span>${esc(p.name)}</span><b>+${p.delta}</b></div>`).join('') || '<span class="muted">Nikt nie zdobył punktów</span>'}</div></div>`;
   },
 
@@ -193,6 +195,14 @@ const SCENES = {
       <div class="footer"><span class="pulse">Host: następna runda?</span></div></div>`;
   },
 };
+
+function optGrid(res, reveal) {
+  return `<div class="tvopts ${reveal ? 'small' : 'late2'}">${(res.options || []).map((w, i) => {
+    const who = Object.keys(res.picks || {}).filter(id => res.picks[id] === w).map(P).filter(Boolean);
+    const cls = reveal ? (w === res.word ? 'good' : who.length ? 'bad' : 'dim') : who.length ? 'on' : '';
+    return `<div class="tvopt ${cls}" data-w="${esc(w)}" style="animation-delay:${reveal ? 0 : 2.6 + i * .08}s"><span>${esc(w)}</span><div class="pk">${who.map(p => av(p, 'xs')).join('')}</div></div>`;
+  }).join('')}</div>`;
+}
 
 /* ---------- aktualizacje bez przeładowania sceny ---------- */
 const UPDATE = {
@@ -216,8 +226,21 @@ const UPDATE = {
       b.querySelector('.fill').style.width = (n / max) * 100 + '%';
       if (num.textContent !== String(n)) { num.textContent = n; num.classList.remove('bump'); void num.offsetWidth; num.classList.add('bump'); }
       b.classList.toggle('lead', n > 0 && n === max);
+      const B = S.R.ballots || {}, vs = Object.keys(B).filter(v => B[v] === b.dataset.id);
+      const box = b.querySelector('.voters'), key = vs.join(',');
+      if (box.dataset.k !== key) { box.dataset.k = key; box.innerHTML = vs.map(P).filter(Boolean).map(p => av(p, 'xs')).join(''); }
     });
   },
+};
+UPDATE['res-impostors'] = () => {
+  const res = S.R.res; if (res.troll) return;
+  stage.querySelectorAll('.tvopt').forEach(el => {
+    const w = el.dataset.w, who = Object.keys(res.picks || {}).filter(id => res.picks[id] === w).map(P).filter(Boolean);
+    const k = who.map(p => p.id).join(','), pk = el.querySelector('.pk');
+    if (pk.dataset.k === k) return;
+    pk.dataset.k = k; pk.innerHTML = who.map(p => av(p, 'xs')).join('');
+    el.classList.toggle('on', who.length > 0);
+  });
 };
 const MOUNT = {
   wait() { drawQR(); },
