@@ -24,6 +24,12 @@ Miasto kontra mafia. Telewizor jest narratorem i czyta komunikaty na głos po po
   - pasywne: działają same, gdy leżą w ręce (druga szansa, bomba, zemsta, tarcza).
 - W jednej fazie można zagrać jedną kartę. Wyniki nocnych śledztw przychodzą rano, tylko do ciebie.
 
+## 🧪 Tryb testowy (jedna osoba gra za wszystkich)
+Otwórz **`vcbgf5.github.io/Impostorgame/test`** (albo `test.html`) na komputerze. Zobaczysz telewizor i obok **telefony graczy (3–12)**, które same dołączają do gry. Każdym telefonem klikasz jak prawdziwy gracz.
+- Wybierz grę (Mafia / Impostor) i liczbę graczy, potem „▶ Uruchom od nowa”.
+- „🪟 Gracze w osobnych oknach” otwiera każdego gracza w osobnym oknie (albo kliknij linki pod telewizorem).
+- Wszystko działa lokalnie w tej przeglądarce: bez internetu i bez kodu.
+
 ---
 
 

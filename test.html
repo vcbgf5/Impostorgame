@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tryb testowy – TV + gracze</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;600;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0d0b1f;--panel:#1b1842;--line:#312c6e;--txt:#f4f2ff;--mut:#a29cd4;--pri:#ff3d71}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font-family:Rubik,system-ui,sans-serif;overflow:hidden}
+  .bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 14px;background:#141038;border-bottom:1px solid var(--line);height:52px}
+  .bar b{font-weight:900;letter-spacing:.08em;color:var(--pri)}
+  .bar label{font-size:13px;color:var(--mut);display:flex;align-items:center;gap:6px}
+  select,button{font:inherit;color:var(--txt);background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:6px 10px;cursor:pointer}
+  button.pri{background:linear-gradient(135deg,#ff3d71,#7a2cff);border:0;font-weight:700}
+  .hint{font-size:12px;color:var(--mut);margin-left:auto}
+  .main{display:flex;gap:10px;padding:10px;height:calc(100% - 52px)}
+  .tvbox{flex:1.35;min-width:0;display:flex;flex-direction:column;gap:6px}
+  .tvwrap{position:relative;width:100%;aspect-ratio:16/9;max-height:100%;border-radius:12px;overflow:hidden;border:2px solid var(--line);background:#000}
+  .tvwrap iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+  .cap{font-size:12px;color:var(--mut)}
+  .links{font-size:12px;color:var(--mut);display:flex;flex-wrap:wrap;gap:6px}
+  .links a{color:#9fd0ff}
+  .phones{flex:1;min-width:0;position:relative;overflow:auto}
+  .grid{display:grid;gap:8px;justify-content:center;align-content:start}
+  .ph{position:relative;border-radius:16px;overflow:hidden;border:2px solid var(--line);background:#000}
+  .ph iframe{position:absolute;left:0;top:0;width:360px;height:740px;border:0;transform-origin:0 0}
+  .ph span{position:absolute;right:6px;top:4px;font-size:11px;background:#000a;padding:1px 6px;border-radius:6px;z-index:2;pointer-events:none}
+</style>
+</head>
+<body>
+<div class="bar">
+  <b>🧪 TRYB TESTOWY</b>
+  <label>Gra <select id="game"><option value="mafia">🌙 Mafia</option><option value="impostor">🕵️ Impostor</option></select></label>
+  <label>Graczy <select id="count"></select></label>
+  <button class="pri" id="go">▶ Uruchom od nowa</button>
+  <button id="pop">🪟 Gracze w osobnych oknach</button>
+  <span class="hint">Wszystko działa lokalnie w tej przeglądarce – bez internetu i bez kodu. Kliknij TV, żeby sterować strzałkami i Enterem.</span>
+</div>
+<div class="main">
+  <div class="tvbox">
+    <div class="tvwrap"><iframe id="tv" title="Telewizor"></iframe></div>
+    <div class="cap">📺 Telewizor – tryb „każdy swój telefon”. Sterowanie: myszka albo klawiatura (strzałki + Enter).</div>
+    <div class="links" id="links"></div>
+  </div>
+  <div class="phones"><div class="grid" id="grid"></div></div>
+</div>
+<script>
+(() => {
+  const NAMES = ['Ania', 'Bartek', 'Celina', 'Darek', 'Ewa', 'Franek', 'Gosia', 'Henio', 'Iza', 'Jacek', 'Kasia', 'Leon'];
+  const q = new URLSearchParams(location.search);
+  const $ = id => document.getElementById(id);
+  const cnt = $('count');
+  for (let i = 3; i <= 12; i++) cnt.insertAdjacentHTML('beforeend', `<option value="${i}">${i}</option>`);
+  $('game').value = q.get('game') === 'impostor' ? 'impostor' : 'mafia';
+  cnt.value = String(Math.min(12, Math.max(3, Number(q.get('n')) || 6)));
+  const playerUrl = (i, r) => `play.html?local=1&auto=1&tv=TEST&slot=${r}${i}&name=${encodeURIComponent(NAMES[i])}&emoji=${(i * 3) % 24}`;
+
+  function start() {
+    const game = $('game').value, n = Number(cnt.value), r = Date.now().toString(36).slice(-3);
+    history.replaceState(null, '', `?game=${game}&n=${n}`);
+    $('tv').src = `tv.html?game=${game}&mode=multi&t=${r}`;
+    const grid = $('grid');
+    grid.innerHTML = '';
+    // gracze dołączają po chwili, gdy telewizor już działa
+    setTimeout(() => {
+      for (let i = 0; i < n; i++) {
+        grid.insertAdjacentHTML('beforeend', `<div class="ph"><iframe title="${NAMES[i]}" src="${playerUrl(i, r)}"></iframe><span>📱 ${NAMES[i]}</span></div>`);
+      }
+      layout();
+    }, 1200);
+    $('links').innerHTML = 'Osobne okna: ' + Array.from({ length: n }, (_, i) => `<a href="${playerUrl(i, r + 'w')}" target="_blank" onclick="document.getElementById('grid').innerHTML=''">${NAMES[i]}</a>`).join(' · ');
+  }
+  // dopasuj skalę telefonów do wolnego miejsca
+  function layout() {
+    const box = document.querySelector('.phones'), phones = [...document.querySelectorAll('.ph')];
+    if (!phones.length) return;
+    const W = box.clientWidth - 4, H = box.clientHeight - 4, n = phones.length;
+    let best = { s: 0, cols: 1 };
+    for (let cols = 1; cols <= n; cols++) {
+      const rows = Math.ceil(n / cols);
+      const s = Math.min((W - (cols - 1) * 8) / cols / 360, (H - (rows - 1) * 8) / rows / 740);
+      if (s > best.s) best = { s, cols };
+    }
+    const s = Math.max(0.3, best.s);
+    $('grid').style.gridTemplateColumns = `repeat(${best.cols}, ${Math.floor(360 * s)}px)`;
+    phones.forEach(p => { p.style.width = Math.floor(360 * s) + 'px'; p.style.height = Math.floor(740 * s) + 'px'; p.querySelector('iframe').style.transform = `scale(${s})`; });
+  }
+  window.addEventListener('resize', layout);
+  $('go').onclick = start;
+  $('pop').onclick = () => {
+    const n = Number(cnt.value), r = Date.now().toString(36).slice(-3) + 'w';
+    $('grid').innerHTML = '<p class="cap">Gracze są w osobnych oknach 🪟</p>'; // żeby nikt nie grał podwójnie
+    let blocked = 0;
+    for (let i = 0; i < n; i++) {
+      const w = window.open(playerUrl(i, r), 'gracz' + i, `width=380,height=780,left=${40 + i * 60},top=${40 + i * 30}`);
+      if (!w) blocked++;
+    }
+    if (blocked) alert('Przeglądarka zablokowała część okien. Zezwól na wyskakujące okienka dla tej strony albo użyj linków pod telewizorem.');
+  };
+  start();
+})();
+</script>
+</body>
+</html>

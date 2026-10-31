@@ -15,9 +15,12 @@ const normCode = c => String(c || '').toUpperCase().replace(/[^A-Z0-9]/g, '').sl
 const params = new URLSearchParams(location.search);
 const LOCAL = params.get('local') === '1';
 const box = () => LOCAL ? sessionStorage : localStorage; // test w jednej przeglądarce: każda karta = osobny gracz
+// strona testowa (test.html): kilka telefonów w jednej karcie – każdy „slot” ma osobną pamięć
+const SLOT = (params.get('slot') || '').replace(/[^0-9a-z]/gi, '').slice(0, 4);
+const KEY = 'impp_' + (SLOT ? 's' + SLOT + '_' : '');
 const store = {
-  get(k, d) { try { const v = box().getItem('impp_' + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
-  set(k, v) { try { box().setItem('impp_' + k, JSON.stringify(v)); } catch (e) {} },
+  get(k, d) { try { const v = box().getItem(KEY + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+  set(k, v) { try { box().setItem(KEY + k, JSON.stringify(v)); } catch (e) {} },
 };
 
 const ME = {
@@ -26,9 +29,13 @@ const ME = {
   code: normCode(params.get('tv')) || store.get('code', ''),
   emoji: store.get('emoji', ''),
 };
+if (params.get('name')) { ME.name = params.get('name').slice(0, 16); store.set('name', ME.name); }
+if (params.get('emoji') && EMOJI[Number(params.get('emoji'))]) { ME.emoji = EMOJI[Number(params.get('emoji'))]; store.set('emoji', ME.emoji); }
 if (!ME.emoji) { ME.emoji = EMOJI[Math.floor(Math.random() * EMOJI.length)]; store.set('emoji', ME.emoji); }
 store.set('pid', ME.pid);
-if (params.get('tv')) history.replaceState(null, '', location.pathname + (LOCAL ? '?local=1' : ''));
+if (ME.code) store.set('code', ME.code);
+const AUTO = LOCAL && params.get('auto') === '1';
+if (params.get('tv') && !AUTO) history.replaceState(null, '', location.pathname + (LOCAL ? '?local=1' + (SLOT ? '&slot=' + SLOT : '') : ''));
 
 let P = null, recvAt = 0, want = false, status = '', errMsg = '', lastKey = '', holding = false, pending = false;
 const T = { peer: null, conn: null, retry: null, bc: null };
@@ -288,6 +295,6 @@ async function wake() { try { if ('wakeLock' in navigator && !wl) { wl = await n
 
 render(true);
 // wróć do gry automatycznie (np. po odświeżeniu), jeśli mamy imię i kod
-if (ME.name && ME.code && (params.get('tv') || store.get('auto', false))) { want = true; connect(); }
+if (ME.name && ME.code && (params.get('tv') || AUTO || store.get('auto', false))) { want = true; connect(); }
 window.addEventListener('pagehide', () => store.set('auto', want));
 })();
