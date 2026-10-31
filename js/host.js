@@ -525,8 +525,8 @@ function connectTv(code) {
       T.conn = c;
       const to = setTimeout(() => { if (T.conn === c && !c.open) { setStatus('TV nie odpowiada…'); try { c.close(); } catch (e) {} T.conn = null; retryLater(); } }, 9000);
       c.on('open', () => { clearTimeout(to); if (T.conn !== c) return; setStatus(''); sync(); updTv(); vib(30); });
-      c.on('data', m => { if (m && m.type === 'hello') sync(); });
-      c.on('close', () => { if (T.conn === c) { T.conn = null; setStatus('rozłączono, ponawiam…'); retryLater(); } });
+      c.on('data', m => { if (m && m.type === 'hello') sync(); if (m && m.type === 'err') { T.err = m.text; if (!T.errShown) { T.errShown = true; alert(m.text); } } });
+      c.on('close', () => { if (T.conn === c) { T.conn = null; setStatus(T.err ? 'TV w innym trybie – ponawiam…' : 'rozłączono, ponawiam…'); T.err = ''; retryLater(); } });
       c.on('error', () => {});
     };
     if (T.peer && !T.peer.destroyed && T.peer.open) return go();

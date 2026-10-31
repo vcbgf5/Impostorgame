@@ -16,6 +16,7 @@
 <script src="js/vendor/qrcode.js"></script>
 <script src="js/vendor/peerjs.min.js"></script>
 <script src="js/tv.js"></script>
+<script src="js/tvgame.js"></script>
 <script>
 // Połączenie z telefonem hosta: PeerJS (WebRTC) + BroadcastChannel (karta w tej samej przeglądarce)
 (function () {
@@ -26,6 +27,34 @@
   var code; try { code = localStorage.getItem('imp_tv_code'); } catch (e) {}
   if (!code) code = newCode();
   var fails = 0;
+
+  // host (tryb jednego telefonu) wysyła 'state'/'hello'; gracze (tryb multi) wysyłają 'join', 'seen', 'vote'…
+  function route(c, m) {
+    if (typeof m === 'string') { try { m = JSON.parse(m); } catch (e) { return; } }
+    if (!m) return;
+    if (m.type === 'state' || m.type === 'hello') {
+      if (TV.mode === 'multi') {
+        if (m.type === 'state' && !c._warned) {
+          c._warned = true;
+          try { c.send({ type: 'err', text: 'Telewizor jest w trybie „Każdy swój telefon”. Zmień tryb na telewizorze.' }); } catch (e) {}
+          setTimeout(function () { try { c.close(); } catch (e) {} }, 800);
+        }
+        return;
+      }
+      TV.onMessage(m); return;
+    }
+    TVGame.onPlayerMsg(c, m);
+  }
+  // gracze w tej samej przeglądarce (test: play.html?local=1)
+  try {
+    var pbc = new BroadcastChannel('impostor-play'), fake = {};
+    pbc.onmessage = function (e) {
+      var d = e.data || {}; if (!d.from) return;
+      var c = fake[d.from];
+      if (!c) c = fake[d.from] = { open: true, send: function (m) { pbc.postMessage({ to: d.from, m: m }); }, close: function () { this.open = false; TVGame.onClose(this); delete fake[d.from]; } };
+      route(c, d.m);
+    };
+  } catch (e) {}
 
   try {
     var bc = new BroadcastChannel('impostor-tv');
@@ -40,8 +69,9 @@
     var peer = new Peer(PREFIX + code);
     peer.on('open', function () { fails = 0; TV.setCode(code, 'ready'); });
     peer.on('connection', function (c) {
-      c.on('open', function () { TV.addSender(function (m) { if (c.open) c.send(m); }); c.send({ type: 'hello' }); });
-      c.on('data', function (m) { TV.onMessage(m); });
+      c.on('open', function () { TV.addSender(function (m) { if (c.open && !c._pid) c.send(m); }); });
+      c.on('data', function (m) { route(c, m); });
+      c.on('close', function () { TVGame.onClose(c); });
     });
     peer.on('disconnected', function () { try { if (!peer.destroyed) peer.reconnect(); } catch (e) {} });
     peer.on('error', function (e) {

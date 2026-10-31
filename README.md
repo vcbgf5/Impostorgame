@@ -2,7 +2,13 @@
 
 Jeden telefon (host) krąży między graczami, a laptop podłączony do telewizora pokazuje lobby, instrukcje, czyja jest kolej, odliczanie, głosowanie, wyniki i animacje.
 
-## Jak to działa
+## Dwa tryby (wybierasz na telewizorze pilotem: strzałki + OK)
+- **📱 Jeden telefon**: host ma telefon, który krąży między graczami (opis poniżej).
+- **👥 Każdy swój telefon**: telewizor prowadzi grę. Gracze skanują QR z TV (albo wchodzą na `…/play` i wpisują kod), podają imię i dołączają. Każdy widzi swoje słowo u siebie i klika „Widziałem”. Głosuje na swoim telefonie, a impostor wybiera słowo z 10 też u siebie. Kategorie, zasady, start, następną rundę i usuwanie graczy robisz **pilotem na telewizorze**. Telewizor sam przechodzi dalej, gdy wszyscy zagłosują albo skończy się czas.
+
+Test lokalny trybu wielu telefonów w jednej przeglądarce: `tv.html` w jednej karcie i kilka kart `play.html?local=1` (każda karta to osobny gracz).
+
+## Tryb jednego telefonu – jak to działa
 
 1. **Laptop + TV**: otwórz `tv.html` (F11 = pełny ekran). Laptop podłączasz kablem HDMI albo w Chrome wybierasz *⋮ → Przesyłaj → Przesyłaj kartę* na Chromecasta. Na ekranie pojawi się **kod (np. `KAE4`) i QR**.
 2. **Telefon hosta**: zeskanuj QR albo otwórz `index.html` i wpisz kod. Telefon łączy się z laptopem przez WebRTC (PeerJS). Nie trzeba konta, rejestracji ani aplikacji na telewizorze. Oba urządzenia potrzebują internetu.

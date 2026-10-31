@@ -1,4 +1,4 @@
-/* Impostor – ekran telewizora (Chromecast / karta / Presentation API) */
+/* Impostor – ekran telewizora: tryb jednego telefonu (host) i tryb „każdy swój telefon” */
 (() => {
 'use strict';
 const stage = document.getElementById('stage');
@@ -15,24 +15,42 @@ const TV = window.TV = {
   setCode(code, net) {
     const changed = code !== CODE;
     CODE = code; NET = net;
-    if (changed && (scene === 'wait' || scene === 'lobby')) { fullKey = ''; draw(); }
+    if (changed && (scene === 'wait' || scene === 'lobby' || scene === 'mlobby')) { fullKey = ''; draw(); }
     stage.querySelectorAll('.tv-code').forEach(el => { el.textContent = CODE; });
     stage.querySelectorAll('.tv-net').forEach(el => { el.textContent = netTxt(); el.className = 'tv-net ' + NET; });
   },
+  mode: null,
   onMessage(m) {
     if (typeof m === 'string') { try { m = JSON.parse(m); } catch (e) { return; } }
     if (!m || m.type !== 'state' || !m.state) return;
+    if (TV.mode === 'multi') return;
+    if (TV.mode !== 'single') TV.setMode('single', true);
     S = m.state; recvAt = performance.now(); draw();
   },
+  // stan z lokalnego silnika gry (tryb „każdy swój telefon”)
+  local(st) { if (TV.mode !== 'multi') return; S = st; recvAt = performance.now(); draw(); },
+  setMode(m, keepState) {
+    TV.mode = m || null;
+    if (m) { try { localStorage.setItem('imp_tv_mode', m); } catch (e) {} }
+    if (!keepState) S = null;
+    fullKey = '';
+    if (window.TVGame) { if (m === 'multi') TVGame.activate(); else if (TVGame.active) TVGame.deactivate(); }
+    draw();
+  },
 };
+const lastMode = () => { try { return localStorage.getItem('imp_tv_mode') || 'single'; } catch (e) { return 'single'; } };
+const MULTI = () => S && S.mode === 'multi';
+const btn = (act, arg, html, cls = '', extra = '') => `<button class="tvbtn ${cls}" data-act="${act}" data-arg="${esc(arg)}" ${extra}>${html}</button>`;
+const baseDir = () => location.pathname.replace(/[^/]*$/, '');
+const playShort = () => location.host + baseDir() + 'play';
 function hello() { senders.forEach(fn => { try { fn({ type: 'hello' }); } catch (e) {} }); }
 setInterval(hello, 4000);
 
 const netTxt = () => ({ ready: 'gotowe do połączenia', connecting: 'łączenie z serwerem…', offline: 'brak internetu – ponawiam…' }[NET] || '');
-const hostUrl = () => { const u = new URL('index.html', location.href); u.searchParams.set('tv', CODE); return u.href; };
+const joinUrl = () => { const u = new URL(TV.mode === 'multi' ? 'play.html' : 'index.html', location.href); u.searchParams.set('tv', CODE); return u.href; };
 function drawQR() {
   const el = stage.querySelector('#qr'); if (!el || !CODE || !window.qrcode) return;
-  try { const q = qrcode(0, 'M'); q.addData(hostUrl()); q.make(); el.innerHTML = q.createSvgTag({ cellSize: 8, margin: 0, scalable: true }); } catch (e) {}
+  try { const q = qrcode(0, 'M'); q.addData(joinUrl()); q.make(); el.innerHTML = q.createSvgTag({ cellSize: 8, margin: 0, scalable: true }); } catch (e) {}
 }
 const P = id => S.players.find(p => p.id === id);
 function every(ms, fn) { const t = setInterval(fn, ms); loops.push(t); fn(); }
@@ -63,7 +81,39 @@ const HOW = [
 const TIPS = ['Mów jedno skojarzenie — krótko!', 'Nie bądź zbyt oczywisty, impostor słucha 👂', 'Impostorze: udawaj pewność siebie 😎', 'Obserwujcie, kto się waha 🤔', 'Kto mówi za ogólnie? 🧐'];
 
 const SCENES = {
+  mode: () => `<div class="scene center modesel">
+    <div class="logo-big glitch" data-t="IMPOSTOR">IMPOSTOR</div>
+    <p class="big-p">Jak gracie?</p>
+    <div class="modes">
+      ${btn('mode', 'single', '<div class="me">📱</div><b>Jeden telefon</b><span>Host podaje jeden telefon kolejnym graczom</span>', 'mode-card', lastMode() === 'single' ? 'data-focus' : '')}
+      ${btn('mode', 'multi', '<div class="me">👥</div><b>Każdy swój telefon</b><span>Gracze dołączają kodem QR, ustawienia robisz pilotem na TV</span>', 'mode-card', lastMode() === 'multi' ? 'data-focus' : '')}
+    </div>
+    <p class="muted">🎮 Pilot: strzałki i OK</p></div>`,
+
+  mlobby: () => `<div class="scene mlobby">
+    <div class="mcol">
+      <div class="mhead"><div class="logo-mid glitch" data-t="IMPOSTOR">IMPOSTOR</div><div class="muted">👥 każdy swój telefon</div></div>
+      <div class="join panel"><div class="qr-box sm"><div id="qr"></div></div>
+        <div class="join-t"><b>Dołączcie telefonem!</b><p>Zeskanuj QR albo wejdź na<br><span class="url">${esc(playShort())}</span><br>i wpisz kod:</p><div class="code-mid tv-code">${esc(CODE)}</div><div class="tv-net ${NET}">${netTxt()}</div></div></div>
+      <div class="panel grow"><h3>Gracze <span id="pc"></span> <small>OK = usuń</small></h3><div class="mplayers" id="mp"></div></div>
+    </div>
+    <div class="mcol">
+      <div class="panel"><h3>Zasady <small>OK = zmień</small></h3><div class="setgrid" id="ms"></div></div>
+      <div class="panel grow"><h3>Kategorie <span id="cc"></span></h3><div class="catgrid" id="mc"></div></div>
+      <div class="mactions">${btn('back', '', '← Tryb', 'ghost')}${btn('start', '', '▶ START RUNDY', 'primary big', 'data-focus')}</div>
+    </div></div>`,
+
+  mreveal: () => `<div class="scene center mreveal">
+    <div class="round-tag">Runda ${S.round} · rozdawanie ról</div>
+    <div class="phone-shake">📱</div>
+    <div class="title">Sprawdźcie swoje telefony!</div>
+    <p class="big-p">Przytrzymaj kafelek, zobacz słowo i kliknij <b>„Widziałem”</b></p>
+    <div class="seen-grid" id="sg"></div>
+    <div class="warn">🤫 Nie pokazuj ekranu innym!</div>
+    ${btn('skipReveal', '', 'Nie czekaj na resztę ⏭', 'ghost sm')}</div>`,
+
   wait: () => `<div class="scene wait">
+    ${btn('mode', '', '← Zmień tryb', 'ghost sm corner')}
     <div class="wait-l">
       <div class="logo-big glitch" data-t="IMPOSTOR">IMPOSTOR</div>
       <div class="spy">🕵️</div>
@@ -115,7 +165,7 @@ const SCENES = {
     return `<div class="scene center">
       <div class="check pop">✔</div>
       <h1 class="title">Wszyscy znają swoje role!</h1>
-      <p class="big-p">Oddajcie telefon hostowi</p>
+      <p class="big-p">${MULTI() ? 'Schowajcie telefony — zaraz dyskusja' : 'Oddajcie telefon hostowi'}</p>
       <div class="starter rise">Zaczyna ${av(st, 'md')} <b style="color:${st.color}">${esc(st.name)}</b></div></div>`;
   },
 
@@ -127,14 +177,17 @@ const SCENES = {
       ${ring('xl')}
       <div class="starter">Zaczyna ${av(P(R.starter), 'md')} <b>${esc(P(R.starter).name)}</b></div>
       <div class="order">${ord.map((p, i) => `<div class="o" style="animation-delay:${i * 80}ms">${av(p, 'sm')}<span>${esc(p.name)}</span></div>${i < ord.length - 1 ? '<em>➜</em>' : ''}`).join('')}</div>
-      <div class="tip" id="tip"></div></div>`;
+      <div class="tip" id="tip"></div>
+      ${MULTI() ? btn('voteNow', '', '🗳️ Głosujemy teraz', 'primary', 'data-focus') : ''}</div>`;
   },
 
   vote: () => {
-    const rows = S.players.map(p => ({ id: p.id, html: `${av(p, 'sm')}<span>${esc(p.name)}</span>`, c: p.color }));
+    const rows = (S.R.ids ? S.R.ids.map(P).filter(Boolean) : S.players).map(p => ({ id: p.id, html: `${av(p, 'sm')}<span>${esc(p.name)}</span>`, c: p.color }));
     if (S.R.trollVote) rows.push({ id: 'troll', html: '<div class="av sm" style="--c:#ffd43b">🤡</div><span>Troll – wszyscy!</span>', c: '#ffd43b' });
     return `<div class="scene vote">
-      <div class="vote-head">${ring('md')}<div><div class="title">🗳️ GŁOSOWANIE</div><p class="big-p">Na trzy wskażcie podejrzanego!</p><div class="count321"><span>3</span><span>2</span><span>1</span><span>👉</span></div></div></div>
+      <div class="vote-head">${ring('md')}<div><div class="title">🗳️ GŁOSOWANIE</div>${MULTI()
+        ? `<p class="big-p">Głosujcie na swoich telefonach! <b id="vc"></b></p>${btn('endVote', '', 'Zakończ głosowanie ⏭', 'ghost sm')}`
+        : '<p class="big-p">Na trzy wskażcie podejrzanego!</p><div class="count321"><span>3</span><span>2</span><span>1</span><span>👉</span></div>'}</div></div>
       <div class="bars">${rows.map(r => `<div class="bar" data-id="${r.id}"><div class="bl">${r.html}</div><div class="track"><div class="fill" style="--c:${r.c}"></div><div class="voters"></div></div><b class="num">0</b></div>`).join('')}</div></div>`;
   },
 
@@ -149,7 +202,7 @@ const SCENES = {
       <div class="kicker">Wyrzucacie…</div>
       <div class="drum">🥁</div>
       <div class="late">${out}</div>
-      <p class="muted late2">Host: odkryj impostora</p></div>`;
+      <p class="muted late2">${MULTI() ? 'Za chwilę prawda…' : 'Host: odkryj impostora'}</p></div>`;
   },
 
   'res-impostors': () => {
@@ -165,8 +218,9 @@ const SCENES = {
       <div class="toprow">${stamp}
         <div class="late imp-col"><div class="kicker">${imps.length > 1 ? 'Impostorami byli' : 'Impostorem był'}</div>
         <div class="imps">${imps.map((p, i) => `<div class="imp-card red" style="animation-delay:${1.6 + i * .2}s">${av(p, 'lg')}<span>${esc(p.name)}</span></div>`).join('')}</div></div></div>
-      <div class="lastchance late2">🎯 Ostatnia szansa! Impostorze, które to słowo?</div>
-      ${optGrid(res, false)}</div>`;
+      <div class="lastchance late2">🎯 Ostatnia szansa! ${MULTI() ? 'Impostorze, wybierz słowo na swoim telefonie' : 'Impostorze, które to słowo?'}</div>
+      ${optGrid(res, false)}
+      ${MULTI() ? `<div class="row-c late2">${ring('xs')}${btn('showWord', '', 'Pokaż słowo ⏭', 'ghost sm')}</div>` : ''}</div>`;
   },
 
   'res-word': () => {
@@ -180,7 +234,8 @@ const SCENES = {
       <div class="headline">${esc(res.headline)}</div>
       ${res.options && res.options.length && Object.keys(res.picks || {}).length ? optGrid(res, true) : ''}
       ${guessed.length ? `<div class="guessed">🎯 ${guessed.map(p => esc(p.name)).join(', ')} ${guessed.length > 1 ? 'zgadli' : 'zgadł'} słowo! +2</div>` : ''}
-      <div class="gains">${gained.map((p, i) => `<div class="gain" style="animation-delay:${1 + i * .12}s">${av(p, 'sm')}<span>${esc(p.name)}</span><b>+${p.delta}</b></div>`).join('') || '<span class="muted">Nikt nie zdobył punktów</span>'}</div></div>`;
+      <div class="gains">${gained.map((p, i) => `<div class="gain" style="animation-delay:${1 + i * .12}s">${av(p, 'sm')}<span>${esc(p.name)}</span><b>+${p.delta}</b></div>`).join('') || '<span class="muted">Nikt nie zdobył punktów</span>'}</div>
+      ${MULTI() ? btn('scores', '', '🏆 Tabela wyników', 'primary', 'data-focus') : ''}</div>`;
   },
 
   scores: () => {
@@ -192,7 +247,8 @@ const SCENES = {
         <div class="place">${i === 0 && p.score > 0 ? '👑' : i + 1}</div>${av(p, 'sm')}<div class="bn">${esc(p.name)}</div>
         <div class="track"><div class="fill" style="--c:${p.color};--w:${(p.score / max) * 100}%"></div></div>
         <div class="sc">${p.score}${p.delta ? `<i>+${p.delta}</i>` : ''}</div></div>`).join('')}</div>
-      <div class="footer"><span class="pulse">Host: następna runda?</span></div></div>`;
+      ${MULTI() ? `<div class="mactions c">${btn('lobby', '', '⚙️ Ustawienia', 'ghost')}${btn('next', '', '▶ Następna runda', 'primary big', 'data-focus')}</div>`
+        : '<div class="footer"><span class="pulse">Host: następna runda?</span></div>'}</div>`;
   },
 };
 
@@ -220,6 +276,7 @@ const UPDATE = {
     ].filter(Boolean).map(t => `<span class="chip">${esc(t)}</span>`).join('');
   },
   vote() {
+    const vc = stage.querySelector('#vc'); if (vc) vc.textContent = `(${Object.keys(S.R.ballots || {}).length}/${(S.R.ids || S.players).length})`;
     const v = S.R.votes || {}, max = Math.max(1, ...Object.values(v));
     stage.querySelectorAll('.bar').forEach(b => {
       const n = v[b.dataset.id] || 0, num = b.querySelector('.num');
@@ -242,8 +299,42 @@ UPDATE['res-impostors'] = () => {
     el.classList.toggle('on', who.length > 0);
   });
 };
+UPDATE.mlobby = () => {
+  const st = S.settings;
+  stage.querySelector('#pc').textContent = `(${S.players.length})`;
+  stage.querySelector('#mp').innerHTML = S.players.length
+    ? S.players.map(p => btn('kick', p.id, `${av(p, 'sm')}<span>${esc(p.name)}</span>${p.score ? `<small>${p.score}</small>` : ''}${p.online ? '' : '<i>📵</i>'}`, 'pchip ' + (p.online ? '' : 'off'))).join('')
+    : '<div class="muted empty">Nikt jeszcze nie dołączył…<br>Zeskanujcie QR telefonami 📱</div>';
+  stage.querySelector('#ms').innerHTML = [
+    btn('set', 'impostors', `🕵️ Impostorów: <b>${st.impostors}</b>`, 'opt'),
+    btn('set', 'hint', `💡 Podpowiedź: <b>${st.hint ? 'tak' : 'nie'}</b>`, 'opt'),
+    btn('set', 'troll', `🤡 Troll: <b>${st.troll ? st.troll + '%' : 'wył'}</b>`, 'opt'),
+    btn('set', 'discuss', `⏱️ Dyskusja: <b>${st.discuss ? st.discuss / 60 + ' min' : '∞'}</b>`, 'opt'),
+    btn('set', 'vote', `🗳️ Głosowanie: <b>${st.vote} s</b>`, 'opt'),
+  ].join('');
+  const on = (st.catList || []).filter(c => c.on);
+  stage.querySelector('#cc').textContent = `(${on.length}/${(st.catList || []).length} · ${on.reduce((s, c) => s + c.n, 0)} słów)`;
+  stage.querySelector('#mc').innerHTML = (st.catList || []).length
+    ? btn('allCats', '', '✅ Wszystkie', 'cat util') + btn('noCats', '', '⬜ Żadna', 'cat util') + st.catList.map(c => btn('cat', c.id, `${c.emoji} ${esc(c.name)}`, 'cat ' + (c.on ? 'on' : ''))).join('')
+    : '<div class="muted">Ładowanie słów…</div>';
+};
+let seenPrev = new Set();
+UPDATE.mreveal = () => {
+  const R = S.R, sg = stage.querySelector('#sg');
+  const ps = R.ids.map(P).filter(Boolean);
+  const key = ps.map(p => p.id + R.seen.includes(p.id) + p.online).join(',');
+  if (sg.dataset.k === key) return;
+  if (!sg.dataset.k) seenPrev = new Set();
+  sg.dataset.k = key;
+  sg.innerHTML = ps.map(p => {
+    const ok = R.seen.includes(p.id), fresh = ok && !seenPrev.has(p.id);
+    return `<div class="sg ${ok ? 'ok' : ''} ${fresh ? 'just' : ''} ${p.online ? '' : 'off'}">${av(p, 'md')}<span>${esc(p.name)}</span><i>${ok ? '✔' : p.online ? '⏳' : '📵'}</i></div>`;
+  }).join('');
+  seenPrev = new Set(R.seen);
+};
 const MOUNT = {
   wait() { drawQR(); },
+  mlobby() { drawQR(); },
   lobby() {
     let i = 0;
     const box = stage.querySelector('#how'), dots = stage.querySelector('#howdots');
@@ -262,11 +353,11 @@ const MOUNT = {
 };
 
 function sceneKey() {
-  if (!S) return 'wait';
+  if (!S) return TV.mode === 'single' ? 'wait' : 'mode';
   const R = S.R || {};
   switch (S.phase) {
-    case 'setup': return 'lobby';
-    case 'reveal': return 'reveal';
+    case 'setup': return MULTI() ? 'mlobby' : 'lobby';
+    case 'reveal': return MULTI() ? 'mreveal' : 'reveal';
     case 'result': return 'res-' + R.res.step;
     default: return S.phase;
   }
@@ -276,13 +367,71 @@ function draw() {
   const k = sceneKey();
   const R = S && S.R;
   const fk = k + (k === 'reveal' ? (R.peek || R.idx) + R.stage : '') + (S ? S.round : '');
+  const fkey = focusKey();
   if (fk !== fullKey) {
     fullKey = fk; scene = k; clearLoops();
     stage.innerHTML = SCENES[k]();
     stage.firstElementChild.classList.add('enter');
     if (MOUNT[k]) MOUNT[k]();
+    if (UPDATE[scene]) UPDATE[scene]();
+    restoreFocus(null);
+  } else if (UPDATE[scene]) { UPDATE[scene](); restoreFocus(fkey); }
+  showToast(S && S.msg);
+}
+
+/* ---------- pilot: strzałki + OK ---------- */
+const NAV = '.tvbtn';
+const focusables = () => [...stage.querySelectorAll(NAV)].filter(el => !el.disabled && el.offsetParent !== null);
+function focusKey() { const a = document.activeElement; return a && a.matches && a.matches(NAV) ? a.dataset.act + '|' + a.dataset.arg : null; }
+function restoreFocus(key) {
+  const els = focusables(); if (!els.length) return;
+  let el = key && els.find(e => e.dataset.act + '|' + e.dataset.arg === key);
+  if (!el) { const a = document.activeElement; if (a && els.includes(a)) return; el = els.find(e => e.hasAttribute('data-focus')) || els[0]; }
+  try { el.focus({ preventScroll: true }); } catch (e) { el.focus(); }
+}
+function move(dx, dy) {
+  const els = focusables(); if (!els.length) return;
+  const cur = document.activeElement;
+  if (!els.includes(cur)) return restoreFocus(null);
+  const r = cur.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+  let best = null, bs = Infinity;
+  for (const el of els) {
+    if (el === cur) continue;
+    const q = el.getBoundingClientRect(), ex = q.left + q.width / 2, ey = q.top + q.height / 2;
+    const along = dx ? (ex - cx) * dx : (ey - cy) * dy;
+    if (along <= 2) continue;
+    const across = dx ? Math.abs(ey - cy) : Math.abs(ex - cx);
+    const score = along + across * 2.2;
+    if (score < bs) { bs = score; best = el; }
   }
-  if (UPDATE[scene]) UPDATE[scene]();
+  if (best) { best.focus(); best.scrollIntoView({ block: 'nearest', inline: 'nearest' }); }
+}
+document.addEventListener('keydown', e => {
+  const k = e.key, kc = e.keyCode;
+  const d = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0] }[k] || { 38: [0, -1], 40: [0, 1], 37: [-1, 0], 39: [1, 0] }[kc];
+  if (d) { e.preventDefault(); move(d[0], d[1]); return; }
+  if (k === 'Enter' || kc === 13 || k === ' ') {
+    const a = document.activeElement;
+    if (a && a.matches && a.matches(NAV)) { e.preventDefault(); a.click(); } else { e.preventDefault(); restoreFocus(null); }
+    return;
+  }
+  if (k === 'Backspace' || k === 'Escape' || k === 'GoBack' || kc === 461 || kc === 10009 || kc === 8) {
+    e.preventDefault();
+    if (scene === 'wait' || scene === 'mlobby') TV.setMode(null);
+  }
+});
+stage.addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  const act = b.dataset.act, arg = b.dataset.arg;
+  if (act === 'mode') TV.setMode(arg || null);
+  else if (window.TVGame) TVGame.action(act, arg);
+});
+let curT = null;
+document.addEventListener('mousemove', () => { document.body.classList.remove('nocur'); clearTimeout(curT); curT = setTimeout(() => document.body.classList.add('nocur'), 3000); });
+let toastEl = null;
+function showToast(t) {
+  if (!toastEl) { toastEl = document.createElement('div'); toastEl.className = 'toast'; document.body.appendChild(toastEl); }
+  toastEl.textContent = t || ''; toastEl.classList.toggle('on', !!t);
 }
 
 /* ---------- efekty ---------- */
@@ -299,5 +448,7 @@ function confetti(n = 90) {
 }
 function flash() { const f = document.createElement('div'); f.className = 'redflash'; stage.appendChild(f); setTimeout(() => f.remove(), 1800); }
 
+// po starcie: tryb z adresu (?mode=multi / ?mode=single), inaczej ekran wyboru
+{ const m = new URLSearchParams(location.search).get('mode'); if (m === 'multi' || m === 'single') setTimeout(() => TV.setMode(m), 0); }
 draw();
 })();
