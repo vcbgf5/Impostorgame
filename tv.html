@@ -24,8 +24,7 @@
   var PREFIX = CFG.PEER_PREFIX || 'impostor-pl-gra-';
   var ABC = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   function newCode() { var c = ''; for (var i = 0; i < 4; i++) c += ABC[Math.floor(Math.random() * ABC.length)]; return c; }
-  var code; try { code = localStorage.getItem('imp_tv_code'); } catch (e) {}
-  if (!code) code = newCode();
+  var code = newCode(); // zawsze nowy, losowy kod przy każdym uruchomieniu telewizora
   var fails = 0;
 
   // host (tryb jednego telefonu) wysyła 'state'/'hello'; gracze (tryb multi) wysyłają 'join', 'seen', 'vote'…
@@ -63,7 +62,6 @@
   } catch (e) {}
 
   function start() {
-    try { localStorage.setItem('imp_tv_code', code); } catch (e) {}
     TV.setCode(code, 'connecting');
     if (!window.Peer) { TV.setCode(code, 'offline'); return setTimeout(start, 5000); }
     var peer = new Peer(PREFIX + code);
@@ -78,7 +76,7 @@
       if (e.type === 'unavailable-id') {
         // kod zajęty (np. stara karta jeszcze wisi) – kilka prób, potem nowy kod
         try { peer.destroy(); } catch (x) {}
-        if (++fails >= 3) { code = newCode(); fails = 0; }
+        code = newCode(); fails = 0;
         setTimeout(start, 3000);
       } else if (e.type === 'network' || e.type === 'server-error' || e.type === 'socket-error' || e.type === 'socket-closed') {
         TV.setCode(code, 'offline');

@@ -475,7 +475,7 @@ function pub() {
 /* ---------- transport do TV ----------
    1) PeerJS (WebRTC): telefon ↔ laptop podłączony do telewizora, łączenie kodem z ekranu TV
    2) BroadcastChannel: ekran TV w drugiej karcie tej samej przeglądarki (testy) */
-const T = { bc: null, lastHello: 0, peer: null, conn: null, code: store.get('tvCode', ''), status: '', retry: null };
+const T = { bc: null, lastHello: 0, peer: null, conn: null, code: '', status: '', retry: null };
 try {
   T.bc = new BroadcastChannel('impostor-tv');
   T.bc.onmessage = e => { if (e.data && e.data.type === 'hello') { T.lastHello = Date.now(); sync(); updTv(); } };
@@ -556,5 +556,5 @@ render();
 loadWords();
 const urlCode = normCode(new URLSearchParams(location.search).get('tv'));
 if (urlCode) { connectTv(urlCode); history.replaceState(null, '', location.pathname); }
-else if (T.code) connectTv(T.code);
+// kod TV jest za każdym razem nowy – nie łączymy się automatycznie ze starym
 })();
