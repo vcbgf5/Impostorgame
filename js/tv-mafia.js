@@ -24,6 +24,11 @@ const players = (ids, cls = '') => (ids || []).map(P).filter(Boolean).map(p => {
   const s = S(), role = s.dead && s.dead[p.id];
   return `<div class="mp ${p.alive === false ? 'dead' : ''} ${cls}">${av(p, 'md')}<span>${esc(p.name)}</span>${p.alive === false ? `<i>👻</i>${role ? `<small>${ROLES[role].emoji} ${ROLES[role].name}</small>` : ''}` : ''}${S().cardsOn && p.alive && p.cards ? `<b class="cardn">🃏${p.cards}</b>` : ''}</div>`;
 }).join('');
+// sylwetka miasteczka (wspólna dla nocy i dnia)
+const skyline = () => {
+  const b = [[3, 9, 1], [7, 14, 0], [5, 11, 1], [9, 18, 0], [4, 8, 1], [6, 13, 0], [8, 22, 1], [5, 10, 0], [7, 15, 1], [4, 9, 0], [9, 17, 1], [6, 12, 0], [5, 9, 1], [8, 16, 0], [6, 11, 1]];
+  return `<div class="skyline">${b.map(([w, h, roof]) => `<i style="flex:${w} 0 0;height:${h}rem" class="${roof ? 'roof' : ''}">${Array.from({ length: Math.floor(h / 3) }, () => `<b style="left:${15 + Math.random() * 60}%;top:${10 + Math.random() * 70}%"></b>`).join('')}</i>`).join('')}</div>`;
+};
 const feed = () => { const f = (S().feed || []).slice(-3).reverse(); return f.length ? `<div class="mfeed">${f.map((x, i) => `<div style="opacity:${1 - i * 0.3}">${esc(x.text)}</div>`).join('')}</div>` : ''; };
 
 function settingsBtns() {
@@ -137,7 +142,7 @@ T.reg('ma-night', {
     const passing = !MULTI() && s.pass;
     const p = passing && P(s.pass.cur);
     return `<div class="scene center night">
-      <div class="stars">${stars}</div><div class="moon"></div>
+      <div class="stars">${stars}</div><div class="moon"></div>${skyline()}
       <div class="kicker">Noc ${s.day}</div>
       <div class="title night-t">Miasto śpi…</div>
       ${passing ? `<p class="big-p">${s.pass.stage === 'act' ? 'Ruch wykonuje' : 'Podajcie telefon do'}</p>${av(p, 'lg')}<div class="name-big" style="color:${p.color}">${esc(p.name)}</div>
@@ -185,9 +190,11 @@ T.reg('ma-morning', {
 T.reg('ma-day', {
   html: () => {
     const s = S(), alive = s.ids.filter(id => P(id) && P(id).alive !== false), dead = s.ids.filter(id => P(id) && P(id).alive === false);
-    return `<div class="scene discuss dayscene">
+    const clouds = Array.from({ length: 6 }, (_, i) => `<i style="top:${4 + (i * 9) % 32}%;animation-duration:${38 + i * 9}s;animation-delay:-${i * 11}s;transform:scale(${0.7 + (i % 3) * 0.3})"></i>`).join('');
+    return `<div class="scene discuss dayscene sky">
+      <div class="sky-sun"></div><div class="clouds">${clouds}</div>${skyline()}
       <div class="kicker top">☀️ Dzień ${s.day} · dyskusja</div>
-      ${ring('xl')}
+      ${ring('lg')}
       ${s.spotlight ? `<div class="spot">🎙️ Głos ma: <b>${esc(nm(s.spotlight))}</b></div>` : '<div class="big-p">Kto z was należy do mafii?</div>'}
       <div class="mplist">${players(alive)}</div>
       ${dead.length ? `<div class="mplist ghosts">${players(dead)}</div>` : ''}
