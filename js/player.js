@@ -228,21 +228,29 @@ function render(force) {
   const k = viewKey();
   if (!force && k === lastKey) return;
   if (holding) { pending = true; return; }
+  const drawG = P && P.game === 'draw' && window.PlayerDraw;
+  const H = { esc, av, fmt, timerLeft };
+  // Kalambury: nie przebudowuj ekranu w trakcie rysowania/wpisywania – tylko podmień drobiazgi
+  if (drawG && !force && PlayerDraw.keep(P)) { lastKey = k; PlayerDraw.patch(P, H); return; }
   lastKey = k; pending = false;
   let html;
   const mafia = P && P.game === 'mafia' && window.PlayerMafia;
   if (!P) html = vJoin();
+  else if (drawG) html = PlayerDraw.view(P, H);
   else if (mafia) html = PlayerMafia.view(P, { esc, av, fmt, timerLeft, tile: secret => `<div class="tile" data-seen><div class="tile-secret">${secret}</div><div class="tile-cover"><div class="hand">👆</div><b>PRZYTRZYMAJ</b><span>aby zobaczyć rolę</span></div></div>` });
   else if (P.phase === 'setup') html = vLobby();
   else if (P.phase === 'scores') html = vScores();
   else html = vRound();
   document.body.classList.toggle('mafia-ui', !!mafia);
-  { const lg = document.querySelector('.logo'); if (lg) lg.textContent = mafia ? 'MAFIA' : 'IMPOSTOR'; }
+  { const lg = document.querySelector('.logo'); if (lg) lg.textContent = mafia ? 'MAFIA' : drawG ? 'KALAMBURY' : 'IMPOSTOR'; }
+  document.body.classList.toggle('draw-ui', !!drawG);
   document.body.classList.toggle('night-ui', !!(mafia && P.phase === 'night'));
-  if (P && P.phase !== 'reveal' && !(mafia && P.phase === 'night')) html += `<div class="reactbar">${REACTS.map(e => `<button data-act="react" data-arg="${e}">${e}</button>`).join('')}</div>`;
+  const noReact = !P || (P.phase === 'reveal' && !drawG) || (mafia && P.phase === 'night') || (drawG && P.phase === 'draw');
+  if (!noReact) html += `<div class="reactbar">${REACTS.map(e => `<button data-act="react" data-arg="${e}">${e}</button>`).join('')}</div>`;
   app.innerHTML = html;
-  document.body.classList.toggle('has-react', !!(P && P.phase !== 'reveal' && !(mafia && P.phase === 'night')));
+  document.body.classList.toggle('has-react', !noReact);
   bindTiles();
+  if (drawG) PlayerDraw.mounted(app, sendTV);
   if (!P) { const nm = app.querySelector('#nm'); if (nm && !ME.name) nm.focus(); }
 }
 
@@ -269,6 +277,7 @@ app.addEventListener('click', e => {
   const b = e.target.closest('[data-act]'); if (!b || b.disabled) return;
   const a = b.dataset.act, arg = b.dataset.arg;
   if (P && P.game === 'mafia' && window.PlayerMafia && PlayerMafia.act(a, arg, sendTV, P, () => render(true))) { vib(20); return; }
+  if (P && P.game === 'draw' && window.PlayerDraw && PlayerDraw.act(a, arg, sendTV)) { vib(20); return; }
   if (a === 'seen') { sendTV({ type: 'seen' }); vib(30); b.disabled = true; }
   else if (a === 'vote') { sendTV({ type: 'vote', target: arg }); vib(20); }
   else if (a === 'pick') { sendTV({ type: 'pick', i: Number(arg) }); vib(20); }

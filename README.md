@@ -1,7 +1,16 @@
-# 🎉 Gry imprezowe na telewizor: Impostor i Mafia
+# 🎉 Gry imprezowe na telewizor: Impostor, Mafia i Kalambury
 
 Telewizor pokazuje grę (lobby, instrukcje, odliczanie, głosowania, wyniki, animacje, muzykę), a gracze używają telefonów.
-Na starcie telewizora wybierasz **grę** (🕵️ Impostor albo 🌙 Mafia), a potem **tryb**: 📱 jeden telefon krążący między graczami albo 👥 każdy swój telefon.
+Na starcie telewizora wybierasz **grę** (🕵️ Impostor, 🌙 Mafia albo ✏️ Kalambury), a potem **tryb**: 📱 jeden telefon krążący między graczami albo 👥 każdy swój telefon.
+
+## ✏️ Kalambury
+Jedna osoba rysuje palcem na telefonie, a rysunek pojawia się **na żywo na telewizorze**. Reszta zgaduje.
+- Rysujący wybiera 1 z 3 haseł (z tych samych ~6000 słów i kategorii co Impostor). Na TV widać kategorię i hasło jako kreski `_ _ _ _`. W trakcie rundy odsłaniają się 2 litery.
+- **Narzędzia:** 8 kolorów, 3 grubości, gumka, cofnij, wyczyść i kolor tła.
+- **Zgadywanie:** wszyscy krzyczą odpowiedzi na głos. Rysujący klika na telefonie, kto zgadł pierwszy, i ta osoba wygrywa rundę (+3 pkt). Rysujący dostaje +2. Jest też przycisk „Nikt nie zgadł”.
+- **Jeden telefon** (`draw.html`): telefon przechodzi do rysującego, zasady są te same.
+- **Ustawienia:** czas 60–120 s, obiegi 1–3 (ile razy każdy rysuje) i kategorie.
+- **Na koniec:** podium i galeria wszystkich rysunków z gry.
 
 ## 🌙 Mafia
 Miasto kontra mafia. Telewizor jest narratorem i czyta komunikaty na głos po polsku (synteza mowy przeglądarki; bez polskiego głosu zostają napisy).
@@ -26,7 +35,7 @@ Miasto kontra mafia. Telewizor jest narratorem i czyta komunikaty na głos po po
 
 ## 🧪 Tryb testowy (jedna osoba gra za wszystkich)
 Otwórz **`vcbgf5.github.io/Impostorgame/test`** (albo `test.html`) na komputerze. Zobaczysz telewizor i obok **telefony graczy (3–12)**, które same dołączają do gry. Każdym telefonem klikasz jak prawdziwy gracz.
-- Wybierz grę (Mafia / Impostor) i liczbę graczy, potem „▶ Uruchom od nowa”.
+- Wybierz grę (Mafia / Impostor / Kalambury) i liczbę graczy, potem „▶ Uruchom od nowa”.
 - „🪟 Gracze w osobnych oknach” otwiera każdego gracza w osobnym oknie (albo kliknij linki pod telewizorem).
 - Wszystko działa lokalnie w tej przeglądarce: bez internetu i bez kodu.
 - **🎬 Osobna strona testu animacji:** `vcbgf5.github.io/Impostorgame/testanim`. Duży telewizor, telefon, przycisk dla każdej animacji i „▶ Odtwórz wszystkie po kolei”.

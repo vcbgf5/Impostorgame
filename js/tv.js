@@ -17,7 +17,7 @@ const TV = window.TV = {
   setCode(code, net) {
     const changed = code !== CODE;
     CODE = code; NET = net;
-    if (changed && ['wait', 'lobby', 'mlobby', 'ma-mlobby', 'ma-lobby'].includes(scene)) { fullKey = ''; draw(); }
+    if (changed && ['wait', 'lobby', 'mlobby', 'ma-mlobby', 'ma-lobby', 'dr-mlobby', 'dr-lobby'].includes(scene)) { fullKey = ''; draw(); }
     stage.querySelectorAll('.tv-code').forEach(el => { el.textContent = CODE; });
     stage.querySelectorAll('.tv-net').forEach(el => { el.textContent = netTxt(); el.className = 'tv-net ' + NET; });
   },
@@ -39,7 +39,7 @@ const TV = window.TV = {
     TV.game = g || null;
     if (g) saveGame(g);
     TV.mode = null; S = null; fullKey = '';
-    [window.TVGame, window.MafiaGame].forEach(x => { if (x && x.active) x.deactivate(); });
+    [window.TVGame, window.MafiaGame, window.DrawGame].forEach(x => { if (x && x.active) x.deactivate(); });
     draw();
   },
   react(p, e) {
@@ -56,15 +56,15 @@ const TV = window.TV = {
     if (m) { try { localStorage.setItem('imp_tv_mode', m); } catch (e) {} }
     if (!keepState) S = null;
     fullKey = '';
-    const want = m === 'multi' ? (TV.game === 'mafia' ? window.MafiaGame : window.TVGame) : null;
-    [window.TVGame, window.MafiaGame].forEach(x => { if (x && x !== want && x.active) x.deactivate(); });
+    const want = m === 'multi' ? (TV.game === 'mafia' ? window.MafiaGame : TV.game === 'draw' ? window.DrawGame : window.TVGame) : null;
+    [window.TVGame, window.MafiaGame, window.DrawGame].forEach(x => { if (x && x !== want && x.active) x.deactivate(); });
     if (want) { want.activate(); if (TV.rejoinAll) setTimeout(TV.rejoinAll, 50); }
     draw();
   },
 };
 const saveGame = g => { try { localStorage.setItem('imp_tv_game', g); } catch (e) {} };
 const lastGame = () => { try { return localStorage.getItem('imp_tv_game') || 'impostor'; } catch (e) { return 'impostor'; } };
-const GAMES = { impostor: { name: 'IMPOSTOR', emoji: '🕵️' }, mafia: { name: 'MAFIA', emoji: '🌙' } };
+const GAMES = { impostor: { name: 'IMPOSTOR', emoji: '🕵️' }, mafia: { name: 'MAFIA', emoji: '🌙' }, draw: { name: 'KALAMBURY', emoji: '✏️' } };
 const gameName = () => (GAMES[TV.game] || GAMES.impostor).name;
 const lastMode = () => { try { return localStorage.getItem('imp_tv_mode') || 'single'; } catch (e) { return 'single'; } };
 const MULTI = () => S && S.mode === 'multi';
@@ -75,7 +75,7 @@ function hello() { senders.forEach(fn => { try { fn({ type: 'hello' }); } catch 
 setInterval(hello, 4000);
 
 const netTxt = () => ({ ready: 'gotowe do połączenia', connecting: 'łączenie z serwerem…', offline: 'brak internetu – ponawiam…' }[NET] || '');
-const joinUrl = () => { const u = new URL(TV.mode === 'multi' ? 'play.html' : TV.game === 'mafia' ? 'mafia.html' : 'index.html', location.href); u.searchParams.set('tv', CODE); return u.href; };
+const joinUrl = () => { const u = new URL(TV.mode === 'multi' ? 'play.html' : TV.game === 'mafia' ? 'mafia.html' : TV.game === 'draw' ? 'draw.html' : 'index.html', location.href); u.searchParams.set('tv', CODE); return u.href; };
 function drawQR() {
   const el = stage.querySelector('#qr'); if (!el || !CODE || !window.qrcode) return;
   try { const q = qrcode(0, 'M'); q.addData(joinUrl()); q.make(); el.innerHTML = q.createSvgTag({ cellSize: 8, margin: 0, scalable: true }); } catch (e) {}
@@ -122,6 +122,7 @@ const SCENES = {
     <div class="modes">
       ${btn('game', 'impostor', '<div class="me">🕵️</div><b>Impostor</b><span>Wszyscy znają słowo… oprócz jednej osoby. Znajdźcie kłamcę!</span>', 'mode-card', lastGame() === 'impostor' ? 'data-focus' : '')}
       ${btn('game', 'mafia', '<div class="me">🌙</div><b>Mafia</b><span>Noc, mafia, policjant i lekarz. Miasto kontra mafia.</span>', 'mode-card mafia-card', lastGame() === 'mafia' ? 'data-focus' : '')}
+      ${btn('game', 'draw', '<div class="me">✏️</div><b>Kalambury</b><span>Rysujesz palcem na telefonie, reszta zgaduje z rysunku na TV.</span>', 'mode-card draw-card', lastGame() === 'draw' ? 'data-focus' : '')}
     </div>
     <p class="muted">🎮 Pilot: strzałki i OK</p></div>`,
 
@@ -422,6 +423,7 @@ TV.reg = (name, def) => { SCENES[name] = def.html; if (def.update) UPDATE[name] 
 TV.h = { esc, av, btn, ring, SFX, confetti: (n) => confetti(n), flash: () => flash(), P: id => P(id), get S() { return S; }, MULTI, drawQR, every, playShort, netTxt, code: () => CODE, net: () => NET, timerLeft: () => timerLeft() };
 function sceneKey() {
   if (!S) return !TV.game ? 'game' : TV.mode === 'single' ? 'wait' : 'mode';
+  if (S.game === 'draw') return S.phase === 'setup' ? (MULTI() ? 'dr-mlobby' : 'dr-lobby') : 'dr-' + S.phase;
   if (S.game === 'mafia') return S.phase === 'setup' ? (MULTI() ? 'ma-mlobby' : 'ma-lobby') : S.phase === 'scores' ? 'scores' : 'ma-' + S.phase;
   const R = S.R || {};
   switch (S.phase) {
@@ -468,6 +470,7 @@ function eventSounds() {
 
 // muzyka zależna od ekranu i trybu gry
 function musicFor(k) {
+  if (k.startsWith('dr-')) return TV.drawMusic ? TV.drawMusic(k) : null;
   if (k.startsWith('ma-') || (S && S.game === 'mafia' && k === 'scores')) return TV.mafiaMusic ? TV.mafiaMusic(k) : null;
   if (k === 'game') return 'menu';
   const gm = S && S.settings && S.settings.gmode;
@@ -517,7 +520,7 @@ document.addEventListener('keydown', e => {
   }
   if (k === 'Backspace' || k === 'Escape' || k === 'GoBack' || kc === 461 || kc === 10009 || kc === 8) {
     e.preventDefault();
-    if (scene === 'wait' || scene === 'mlobby' || scene === 'ma-mlobby') TV.setMode(null);
+    if (['wait', 'mlobby', 'ma-mlobby', 'dr-mlobby'].includes(scene)) TV.setMode(null);
     else if (scene === 'mode') TV.setGame(null);
   }
 });
@@ -528,6 +531,7 @@ document.addEventListener('click', e => {
   else if (act === 'game') TV.setGame(arg || null);
   else if (act === 'mode') TV.setMode(arg || null);
   else if (S && S.game === 'mafia' && window.MafiaGame) MafiaGame.action(act, arg);
+  else if (S && S.game === 'draw' && window.DrawGame) DrawGame.action(act, arg);
   else if (window.TVGame) TVGame.action(act, arg);
 });
 let curT = null;
@@ -562,7 +566,7 @@ muteTxt(); if (window.Sfx) Sfx.onChange(muteTxt); setInterval(muteTxt, 2000);
 {
   const q = new URLSearchParams(location.search), m = q.get('mode'), g = q.get('game');
   document.addEventListener('DOMContentLoaded', () => {
-    if (g === 'mafia' || g === 'impostor') { TV.game = g; saveGame(g); }
+    if (g === 'mafia' || g === 'impostor' || g === 'draw') { TV.game = g; saveGame(g); }
     if (TV.game && (m === 'multi' || m === 'single')) TV.setMode(m); else if (m === 'multi' || m === 'single') { TV.game = 'impostor'; TV.setMode(m); } else draw();
   });
 }

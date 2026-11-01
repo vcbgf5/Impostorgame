@@ -66,7 +66,9 @@ window.TVLink = {
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && T.code && !open()) connect(T.code); });
     const q = normCode(new URLSearchParams(location.search).get('tv'));
     if (q) { setTimeout(() => connect(q), 0); history.replaceState(null, '', location.pathname); }
-    return { sync, connect, disconnect, get code() { return T.code; }, get connected() { return open(); } };
+    // dowolna wiadomość do TV (np. kreski w Kalamburach)
+    const send = m => { try { if (T.bc) T.bc.postMessage(m); } catch (e) {} if (open()) { try { T.conn.send(m); } catch (e) {} } };
+    return { sync, send, connect, disconnect, get code() { return T.code; }, get connected() { return open(); } };
   },
 };
 })();

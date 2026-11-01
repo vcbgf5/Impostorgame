@@ -463,3 +463,52 @@ body.nocur{cursor:none}
 .sneak i{animation-name:sneak,bob;animation-duration:21s,.7s;animation-timing-function:linear,ease-in-out;animation-iteration-count:infinite,infinite}
 @keyframes bob{50%{margin-top:-.5rem}}
 .night>.sneak{z-index:0}
+
+/* ================= KALAMBURY ================= */
+.draw-card:focus{background:linear-gradient(145deg,#ff8a3d55,#2ec4b655)}
+.logo-mid.drw,.logo-big.drw{background:linear-gradient(90deg,#ffd60a,#ff8a3d,#2ec4b6,#3a86ff);background-size:200%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:shine 5s linear infinite}
+.draw-bg::before{content:'';position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 85% 10%,#2ec4b622,transparent 45%),radial-gradient(circle at 10% 90%,#ffd60a18,transparent 45%)}
+.drchoose{gap:.7rem}
+.pencil{font-size:5rem;animation:scribble 1.2s ease-in-out infinite}
+@keyframes scribble{0%,100%{transform:translate(0,0) rotate(-10deg)}25%{transform:translate(1.4rem,-.6rem) rotate(8deg)}50%{transform:translate(-1rem,.4rem) rotate(-14deg)}75%{transform:translate(.8rem,.8rem) rotate(6deg)}}
+.mini-board{display:flex;gap:.8rem;flex-wrap:wrap;justify-content:center;margin-top:1rem;font-size:1.1rem;color:var(--mut)}
+.mini-board span{display:flex;align-items:center;gap:.35rem;background:#ffffff0c;padding:.25rem .7rem .25rem .25rem;border-radius:99rem}
+.mini-board b{color:var(--txt)}
+.drscene{display:flex;flex-direction:column;gap:.8rem;padding:1.2rem 1.6rem}
+.drtop{display:flex;align-items:center;gap:1.4rem}
+.drtop .who{display:flex;align-items:center;gap:.7rem;min-width:14rem}
+.drtop .who small{display:block;color:var(--mut);font-size:.95rem}.drtop .who b{font-size:1.6rem}
+.maskbox{flex:1;display:flex;flex-direction:column;align-items:center;gap:.3rem}
+.maskbox small{color:var(--mut);font-size:1rem}
+.mask{display:flex;gap:.45rem;flex-wrap:wrap;justify-content:center}
+.mask b{display:inline-flex;align-items:flex-end;justify-content:center;width:2.4rem;height:3rem;font-size:2.4rem;font-weight:900;border-bottom:.3rem solid #fff;text-transform:uppercase;line-height:1}
+.mask b.lt{color:var(--warn);border-color:var(--warn);animation:bounceIn .5s both}
+.mask .sp{width:1.4rem}
+.drmain{flex:1;display:flex;gap:1rem;min-height:0}
+.drbox{flex:1;aspect-ratio:16/9;max-height:100%;border-radius:1.2rem;overflow:hidden;box-shadow:0 1rem 3rem #0008,0 0 0 .3rem #ffffff22;background:#fff;position:relative;align-self:center}
+.drbox canvas{width:100%;height:100%;display:block}
+.drbox.small{flex:none;width:30rem}
+.drside{width:20rem;display:flex;flex-direction:column;gap:.7rem}
+.glist{display:flex;flex-direction:column;gap:.35rem}
+.gi{display:flex;align-items:center;gap:.5rem;font-size:1.15rem;animation:slideIn .4s both}
+.gi i{margin-left:auto;color:var(--ok);font-style:normal;font-weight:900}
+.chat{display:flex;flex-direction:column;gap:.3rem;font-size:1.05rem;overflow:hidden}
+.cm{display:flex;align-items:center;gap:.35rem;animation:slideIn .3s both}
+.cm span{color:#d7d3f5;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cm.ok span{color:var(--ok);font-weight:800}
+.drreveal{gap:.8rem}
+.revrow{display:flex;gap:2rem;align-items:center}
+.gains.col{flex-direction:column;align-items:flex-start}
+.drfinal{gap:.6rem}
+.drfinal .podium{margin:.4rem 0}
+.drfinal .pod .block{width:9rem}.drfinal .pod.p1 .block{height:8rem}.drfinal .pod.p2 .block{height:5.5rem}.drfinal .pod.p3 .block{height:4rem}
+.gallery{display:flex;gap:.8rem;flex-wrap:wrap;justify-content:center;max-width:94%}
+.gallery figure{margin:0;width:11rem;background:#fff;border-radius:.6rem;padding:.35rem .35rem .2rem;box-shadow:0 .5rem 1.5rem #0008;transform:rotate(-2deg);animation:bounceIn .5s both}
+.gallery figure:nth-child(2n){transform:rotate(2deg)}
+.gallery img{width:100%;border-radius:.3rem;display:block}
+.gallery figcaption{color:#14112e;font-size:.85rem;font-weight:700;text-align:center;padding:.2rem 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.shoutp{display:flex;flex-direction:column;align-items:center;text-align:center;gap:.3rem}
+.shoutp .sh-e{font-size:3.4rem;animation:wiggle 1s ease-in-out infinite}
+.shoutp b{font-size:1.5rem}.shoutp p{margin:0;color:#d7d3f5;font-size:1.05rem;line-height:1.35}
+.winline{display:flex;align-items:center;gap:.7rem;font-size:2rem;font-weight:800;animation:bounceIn .7s .5s both}

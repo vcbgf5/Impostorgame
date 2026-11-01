@@ -39,7 +39,7 @@
 <body>
 <div class="bar">
   <b>🧪 TRYB TESTOWY</b>
-  <label>Gra <select id="game"><option value="mafia">🌙 Mafia</option><option value="impostor">🕵️ Impostor</option></select></label>
+  <label>Gra <select id="game"><option value="mafia">🌙 Mafia</option><option value="impostor">🕵️ Impostor</option><option value="draw">✏️ Kalambury</option></select></label>
   <label>Graczy <select id="count"></select></label>
   <button class="pri" id="go">▶ Uruchom od nowa</button>
   <button id="pop">🪟 Gracze w osobnych oknach</button>
@@ -77,7 +77,7 @@
   const $ = id => document.getElementById(id);
   const cnt = $('count');
   for (let i = 3; i <= 12; i++) cnt.insertAdjacentHTML('beforeend', `<option value="${i}">${i}</option>`);
-  $('game').value = q.get('game') === 'impostor' ? 'impostor' : 'mafia';
+  $('game').value = ['impostor', 'draw'].includes(q.get('game')) ? q.get('game') : 'mafia';
   cnt.value = String(Math.min(12, Math.max(3, Number(q.get('n')) || 6)));
   const playerUrl = (i, r) => `play.html?local=1&auto=1&tv=TEST&slot=${r}${i}&name=${encodeURIComponent(NAMES[i])}&emoji=${(i * 3) % 24}`;
 

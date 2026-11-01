@@ -851,10 +851,49 @@ def fx_mafia_win():
     save('mafia_win', reverb(buf, 2.0, 0.35))
 
 
+# ---------------------------------------------------------------- KALAMBURY
+def music_draw():
+    song('music_draw', 116, ['F', 'C', 'Dm', 'Bb'],
+         'A5 . C6 A5 G5 . F5 . | E5 . G5 . C6 - . . | D5 . F5 D5 A5 . G5 F5 | D5 - F5 - G5 - . .',
+         'happy', lead='pluck', mel2='F6 . . . . . . . | E6 . . . . . . . | D6 . . . . . . . | D6 . . . C6 . . .',
+         lead2='bell', reps=4, keys='epiano', swing=0.12, vol=0.74)
+
+
+def fx_correct():
+    buf = np.zeros(int(1.4 * SR))
+    for i, m in enumerate((76, 81, 84, 88)):
+        place(buf, mix(bell(m + 12, 0.8, 0.35), pluck(m, 0.3, 0.35, 2)), i * 0.06)
+    save('correct', reverb(buf, 1.0, 0.25))
+
+
+def fx_close():
+    buf = np.zeros(int(0.8 * SR))
+    place(buf, lead_note(79, 0.1, 0.5, 'square'), 0); place(buf, lead_note(78, 0.18, 0.4, 'square'), 0.11)
+    save('close', reverb(buf, 0.5, 0.15), peak=0.6)
+
+
+def fx_pencil():
+    # skrobanie ołówka
+    buf = np.zeros(int(1.0 * SR))
+    for k in range(6):
+        n = int(0.09 * SR)
+        place(buf, fft_filter(noise(n), lo=2500, hi=7000) * np.hanning(n) * 0.5, k * 0.13 + 0.03 * np.random.rand())
+    save('pencil', buf, peak=0.6)
+
+
+def fx_round_end():
+    buf = np.zeros(int(2.0 * SR))
+    for m, at in ((72, 0), (76, 0.12), (79, 0.24), (84, 0.4)):
+        place(buf, mix(brass(m, 0.35, 0.35), lead_note(m + 12, 0.3, 0.2, 'square')), at)
+    place(buf, mix(kick(0.9), crash(0.2, 1.2)), 0.4)
+    save('round_end', reverb(buf, 1.2, 0.25))
+
+
 if __name__ == '__main__':
     for fn in (fx_pop, fx_join, fx_ding, fx_tick, fx_tock, fx_blip, fx_whoosh, fx_drumroll, fx_stamp,
                fx_fanfare, fx_win, fx_wah, fx_clown, fx_reveal, fx_react, fx_buzzer, fx_start,
                fx_join_variants, fx_impostor, fx_count, fx_troll,
                music_lobby, music_tension, music_menu, music_double, music_blitz, music_vote, music_victory,
-               fx_night, fx_morning, fx_death, fx_saved, fx_town_win, fx_mafia_win, music_night, music_day):
+               fx_night, fx_morning, fx_death, fx_saved, fx_town_win, fx_mafia_win, music_night, music_day,
+               fx_correct, fx_close, fx_pencil, fx_round_end, music_draw):
         fn()

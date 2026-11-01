@@ -219,3 +219,40 @@ body.night-ui{background:radial-gradient(ellipse at 50% 120%,#0d1b3d 0%,#03040f 
 .deathfx .crack{position:absolute;inset:0;background:repeating-linear-gradient(115deg,transparent 0 46px,#ffffff22 47px,transparent 49px),repeating-linear-gradient(35deg,transparent 0 70px,#ffffff1a 71px,transparent 73px);animation:fadeUp .2s .2s both}
 @keyframes deathfx{0%{opacity:0}8%{opacity:1}80%{opacity:1}100%{opacity:0;visibility:hidden}}
 .deathfx.still{display:none}
+
+/* ================= KALAMBURY (telefon) ================= */
+body.draw-ui{background:radial-gradient(circle at 90% -10%,#0f4a46 0,transparent 45%),radial-gradient(circle at 0% 40%,#4a3a0a 0,transparent 40%),var(--bg)}
+.choices{display:flex;flex-direction:column;gap:10px;width:100%}
+.choice{display:flex;flex-direction:column;gap:2px;padding:16px;border-radius:16px;border:2px solid var(--line);background:linear-gradient(135deg,#2a2466,#1b1842);cursor:pointer;text-align:center}
+.choice b{font-size:22px}.choice small{color:var(--mut)}
+.choice:active{transform:scale(.97);border-color:var(--pri)}
+.drphone{display:flex;flex-direction:column;gap:8px}
+.drhead{display:flex;align-items:center;justify-content:space-between}
+.drhead .clock{margin:0}
+.drword{text-align:center;font-size:16px}.drword b{font-size:22px;color:var(--warn)}.drword small{color:var(--mut);display:block}
+.padwrap{display:flex;flex-direction:column;gap:8px}
+.padbox{width:100%;aspect-ratio:16/9;border-radius:14px;overflow:hidden;box-shadow:0 0 0 3px #ffffff22;touch-action:none}
+canvas.pad{width:100%;height:100%;display:block;touch-action:none;cursor:crosshair}
+.tools{display:flex;flex-direction:column;gap:8px}
+.colors,.row2{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.col{width:34px;height:34px;border-radius:50%;border:3px solid #ffffff33;background:var(--c);cursor:pointer}
+.col.erase{background:#fff;font-size:16px;line-height:1}
+.col.on{border-color:#fff;transform:scale(1.15);box-shadow:0 0 0 2px var(--pri)}
+.sz,.tool{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);background:#1b1842;border-radius:10px;padding:6px 10px;cursor:pointer;font-weight:700;font-size:13px}
+.sz i{display:inline-block;border-radius:50%;background:#fff}
+.sz.on{border-color:var(--pri);background:#ff3d7133}
+.dmaskbox{text-align:center;display:flex;flex-direction:column;align-items:center;gap:4px}
+.dmask{display:flex;gap:5px;flex-wrap:wrap;justify-content:center}
+.dmask b{display:inline-flex;align-items:flex-end;justify-content:center;width:20px;height:26px;border-bottom:3px solid #fff;font-size:20px;font-weight:900;text-transform:uppercase}
+.dmask .sp{width:10px}
+.dmaskbox small{color:var(--mut)}
+.guessf{display:flex;gap:6px}
+.guessf input{font-size:18px}
+.dnote{text-align:center;font-weight:800;padding:8px;border-radius:12px;animation:pop .4s both}
+.dnote.close{background:#4a2a0a;color:#ffb347}.dnote.ok{background:#0f3d2c;color:var(--ok)}
+.dchat{display:flex;flex-direction:column;gap:3px;font-size:13px;color:var(--mut)}
+.dc.ok{color:var(--ok)}
+
+.whoguess{width:100%;text-align:left;display:flex;flex-direction:column;gap:8px;margin:0}
+.whoguess .chip{font-size:15px;padding:8px 12px}
+.shout{text-align:center;padding:30px 10px}.shout .big-emoji{animation:pop .6s both}
