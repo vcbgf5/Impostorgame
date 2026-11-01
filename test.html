@@ -16,6 +16,8 @@
   .bar label{font-size:13px;color:var(--mut);display:flex;align-items:center;gap:6px}
   select,button{font:inherit;color:var(--txt);background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:6px 10px;cursor:pointer}
   button.pri{background:linear-gradient(135deg,#ff3d71,#7a2cff);border:0;font-weight:700}
+  .quick{font-weight:700}.quick.on{outline:2px solid #ffd43b}
+  .tip{color:#ffd98a;font-size:13px;line-height:1.4}
   .hint{font-size:12px;color:var(--mut);margin-left:auto}
   .main{display:flex;gap:10px;padding:10px;height:calc(100% - 52px)}
   .tvbox{flex:1.35;min-width:0;display:flex;flex-direction:column;gap:6px}
@@ -38,7 +40,10 @@
 </head>
 <body>
 <div class="bar">
-  <b>🧪 TRYB TESTOWY</b>
+  <b>🧪 TEST: <span id="gname"></span></b>
+  <button class="quick" data-g="impostor" data-n="4">🕵️ Impostor · 4</button>
+  <button class="quick" data-g="draw" data-n="4">✏️ Kalambury · 4</button>
+  <button class="quick" data-g="mafia" data-n="6">🌙 Mafia · 6</button>
   <label>Gra <select id="game"><option value="mafia">🌙 Mafia</option><option value="impostor">🕵️ Impostor</option><option value="draw">✏️ Kalambury</option></select></label>
   <label>Graczy <select id="count"></select></label>
   <button class="pri" id="go">▶ Uruchom od nowa</button>
@@ -50,6 +55,7 @@
   <div class="tvbox">
     <div class="tvwrap"><iframe id="tv" title="Telewizor"></iframe></div>
     <div class="cap">📺 Telewizor – tryb „każdy swój telefon”. Sterowanie: myszka albo klawiatura (strzałki + Enter).</div>
+    <div class="cap tip" id="tip"></div>
     <div class="links" id="links"></div>
     <div class="anim">
       <b>🎬 Test animacji – TV</b>
@@ -77,13 +83,19 @@
   const $ = id => document.getElementById(id);
   const cnt = $('count');
   for (let i = 3; i <= 12; i++) cnt.insertAdjacentHTML('beforeend', `<option value="${i}">${i}</option>`);
-  $('game').value = ['impostor', 'draw'].includes(q.get('game')) ? q.get('game') : 'mafia';
-  cnt.value = String(Math.min(12, Math.max(3, Number(q.get('n')) || 6)));
+  $('game').value = ['impostor', 'draw', 'mafia'].includes(q.get('game')) ? q.get('game') : 'impostor';
+  cnt.value = String(Math.min(12, Math.max(3, Number(q.get('n')) || 4)));
   const playerUrl = (i, r) => `play.html?local=1&auto=1&tv=TEST&slot=${r}${i}&name=${encodeURIComponent(NAMES[i])}&emoji=${(i * 3) % 24}`;
 
   function start() {
     const game = $('game').value, n = Number(cnt.value), r = Date.now().toString(36).slice(-3);
     history.replaceState(null, '', `?game=${game}&n=${n}`);
+    const G = { impostor: ['🕵️ IMPOSTOR', '1) Kliknij START na TV. 2) Na każdym telefonie przytrzymaj kafelek i kliknij „Widziałem”. 3) Na TV „Głosujemy”, każdy telefon głosuje. 4) Impostor wybiera słowo na swoim telefonie.'],
+      draw: ['✏️ KALAMBURY', '1) Kliknij START na TV. 2) Na telefonie rysującego (Ania) wybierz hasło i rysuj myszką – rysunek pojawia się na TV. 3) Pod płótnem kliknij, kto zgadł (albo „Nikt nie zgadł”). 4) Kolejna osoba rysuje.'],
+      mafia: ['🌙 MAFIA', '1) Kliknij START na TV. 2) Każdy telefon: przytrzymaj kafelek z rolą i „Znam swoją rolę”. 3) W nocy każdy klika osobę. 4) Rano dyskusja i głosowanie na telefonach.'] }[game];
+    $('gname').textContent = G[0]; $('tip').textContent = '💡 ' + G[1];
+    document.querySelectorAll('.quick').forEach(b => b.classList.toggle('on', b.dataset.g === game && b.dataset.n === String(n)));
+    document.title = 'Test – ' + G[0];
     $('tv').src = `tv.html?game=${game}&mode=multi&t=${r}`; // tv.html ładuje skrypty z ?v=wersja
     const grid = $('grid');
     grid.innerHTML = '';
@@ -113,6 +125,7 @@
   }
   window.addEventListener('resize', layout);
   $('go').onclick = start;
+  document.querySelectorAll('.quick').forEach(b => b.onclick = () => { $('game').value = b.dataset.g; cnt.value = b.dataset.n; start(); });
   $('pop').onclick = () => {
     const n = Number(cnt.value), r = Date.now().toString(36).slice(-3) + 'w';
     $('grid').innerHTML = '<p class="cap">Gracze są w osobnych oknach 🪟</p>'; // żeby nikt nie grał podwójnie
