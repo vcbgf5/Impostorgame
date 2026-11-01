@@ -19,6 +19,7 @@ Miasto kontra mafia. Telewizor jest narratorem i czyta komunikaty na głos po po
 - **Noc:** każdy coś klika, obywatele wskazują podejrzanego, żeby nikt nie zgadł ról po zachowaniu.
 - **Rano:** telewizor ogłasza ofiarę (i jej rolę, jeśli to włączone) albo że lekarz kogoś uratował.
 - **Dzień i głosowanie:** dyskusja z odliczaniem, potem głosowanie żywych (można „Pominąć”). Remis = nikt nie odpada.
+- **⏭ Pomiń dzień:** każdy żywy gracz może na telefonie kliknąć „Pomiń dzień”. Gdy kliknie większość, dyskusja kończy się i od razu jest głosowanie.
 - **Wygrana:** miasto, gdy usunie całą mafię; mafia, gdy jest jej tyle, co reszty żywych. Zwycięska drużyna +2 pkt, żywi zwycięzcy +1.
 - **Tryb jednego telefonu:** `mafia.html` na telefonie hosta. W nocy telewizor woła po kolei każdego gracza do telefonu.
 - **Tryb „każdy swój telefon”:** wszystko odbywa się na telefonach, a ustawienia robisz pilotem na TV.

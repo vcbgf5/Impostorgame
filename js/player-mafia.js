@@ -108,7 +108,9 @@ window.PlayerMafia = {
         <h2>${m.victims.length ? '💀 ' + m.victims.map(v => nm(v.id)).join(', ') : m.saved || m.dove ? '🩺 Nikt nie zginął!' : '🌤️ Spokojna noc'}</h2>
         ${fxHTML()}${msgs()}<p class="muted">Patrzcie na telewizor 📺</p>${handHTML()}</div>`;
     }
-    if (P.phase === 'day') return `<div class="center"><div class="step">☀️ Dyskusja</div>${clock()}<p>Kto jest w mafii? Rozmawiajcie!</p>${fxHTML()}${msgs()}${handHTML()}</div>`;
+    if (P.phase === 'day') return `<div class="center"><div class="step">☀️ Dyskusja</div>${clock()}<p>Kto jest w mafii? Rozmawiajcie!</p>
+      <button class="btn ${P.mySkip ? 'primary' : 'ghost'} skipbtn" data-act="m-skip">⏭ ${P.mySkip ? 'Chcesz pominąć dzień ✔' : 'Pomiń dzień → głosowanie'} <small>${P.skips || 0}/${P.skipNeed || '?'}</small></button>
+      <p class="muted small">Gdy większość kliknie, dyskusja kończy się i od razu głosujecie.</p>${fxHTML()}${msgs()}${handHTML()}</div>`;
     if (P.phase === 'vote') {
       if (P.gagged) return `<div class="center"><div class="big-emoji">🤐</div><h2>Masz knebel</h2><p class="muted">W tym głosowaniu nie głosujesz.</p>${handHTML()}</div>`;
       return `<div class="center"><div class="step">🗳️ Głosowanie · ${P.voteCount || 0}/${P.voteTotal || 0}</div>${clock()}
@@ -146,6 +148,7 @@ window.PlayerMafia = {
       case 'm-giftx': ui.gift = null; rerender(); return true;
       case 'm-giftskip': send({ type: 'skipgift' }); return true;
       case 'mvote': send({ type: 'mvote', target: arg }); return true;
+      case 'm-skip': send({ type: 'skipday' }); return true;
     }
     return false;
   },

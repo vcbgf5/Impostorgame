@@ -215,9 +215,9 @@ T.reg('ma-day', {
       <div class="mplist">${players(alive)}</div>
       ${dead.length ? `<div class="mplist ghosts">${players(dead)}</div>` : ''}
       ${feed()}
-      ${MULTI() ? btn('voteNow', '', '🗳️ Głosujemy', 'primary', 'data-focus') : ''}</div>`;
+      ${MULTI() ? `<div class="skipc" id="skipc"></div>${btn('voteNow', '', '🗳️ Głosujemy', 'primary', 'data-focus')}` : ''}</div>`;
   },
-  update: () => { const f = document.querySelector('.mfeed'); const s = S(); if (f) f.outerHTML = feed() || '<div class="mfeed"></div>'; else if ((s.feed || []).length) { const d = document.querySelector('.dayscene'); if (d) d.insertAdjacentHTML('beforeend', feed()); } },
+  update: () => { { const sc = document.getElementById('skipc'), d = S(); if (sc) { const h = `⏭ Pominąć dzień: <b>${d.skips || 0}/${d.skipNeed || '?'}</b>`; if (sc.dataset.h !== h) { sc.innerHTML = h; sc.dataset.h = h; sc.classList.remove('bump'); void sc.offsetWidth; if (d.skips) sc.classList.add('bump'); } } } const f = document.querySelector('.mfeed'); const s = S(); if (f) f.outerHTML = feed() || '<div class="mfeed"></div>'; else if ((s.feed || []).length) { const d = document.querySelector('.dayscene'); if (d) d.insertAdjacentHTML('beforeend', feed()); } },
   mount: () => say('Czas na dyskusję. Kto z was należy do mafii?'),
 });
 

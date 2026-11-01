@@ -261,3 +261,4 @@ canvas.pad{width:100%;height:100%;display:block;touch-action:none;cursor:crossha
 .choice.lv1{border-color:#2ee59d88}.choice.lv1 .stars{color:#2ee59d}
 .choice.lv2{border-color:#ffc53d88}.choice.lv2 .stars{color:#ffc53d}
 .choice.lv3{border-color:#ff4d6d88}.choice.lv3 .stars{color:#ff4d6d}
+.skipbtn{width:100%;margin-top:8px}.skipbtn small{opacity:.8;margin-left:6px}

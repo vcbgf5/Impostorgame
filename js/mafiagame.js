@@ -74,6 +74,7 @@ function onPlayerMsg(c, m) {
       break;
     }
     case 'mvote': E.vote(pid, String(m.target || '')); break;
+    case 'skipday': E.skipDay(pid); break;
     case 'card': { const r = E.playCard(pid, Number(m.i), String(m.target || '')); if (!r.ok && r.msg) send(c, { type: 'note', text: r.msg }); render(); break; }
     case 'gift': { const r = E.gift(pid, Number(m.i), String(m.target || '')); if (!r.ok && r.msg) send(c, { type: 'note', text: r.msg }); render(); break; }
     case 'skipgift': E.skipGift(pid); break;

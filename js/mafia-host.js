@@ -96,7 +96,7 @@ function vDay() {
   return `<div class="center"><div class="step">☀️ Dyskusja · dzień ${E.st.day}</div>
     ${t ? `<div class="clock" data-timer>${fmt(E.timerLeft())}</div><div class="row"><button class="btn sm ghost" data-act="pause">${t.running ? '⏸ Pauza' : '▶ Wznów'}</button><button class="btn sm ghost" data-act="plus30">+30 s</button></div>` : '<div class="clock inf">∞</div>'}
     <div class="chips cen">${M.alive(E.st).map(p => `<span class="chip">${av(p, 'sm')} ${esc(p.name)}</span>`).join('')}</div>
-    <button class="btn big primary" data-act="voteNow">🗳️ Głosowanie</button></div>`;
+    <button class="btn big primary" data-act="voteNow">⏭ Pomiń dzień → głosowanie</button></div>`;
 }
 function vVote() {
   const B = E.st.ballots, al = M.alive(E.st);

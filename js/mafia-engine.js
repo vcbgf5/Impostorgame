@@ -240,9 +240,19 @@ function create(opts) {
   }
   function afterMorning() { const w = M.checkWin(E.st); if (w) return finish(w); goDay(); }
   E.toDay = () => { if (E.phase === 'morning') afterMorning(); };
-  function goDay() { cancel(); E.phase = 'day'; E.timer = E.settings.discuss ? mkTimer(E.settings.discuss, goVote) : null; changed(); }
+  function goDay() { cancel(); E.skips = {}; E.phase = 'day'; E.timer = E.settings.discuss ? mkTimer(E.settings.discuss, goVote) : null; changed(); }
   function goVote() { cancel(); E.phase = 'vote'; E.st.ballots = {}; E.voteCards = []; E.gagged = {}; E.secretVote = false; E.timer = mkTimer(E.settings.vote, endVote); changed(); }
   E.voteNow = () => { if (E.phase === 'day') goVote(); };
+  /* ---------- „Pomiń dzień”: większość żywych kończy dyskusję → głosowanie ---------- */
+  const skipNeed = () => Math.floor(M.alive(E.st).length / 2) + 1;
+  E.skipDay = id => {
+    if (E.phase !== 'day' || !inGame(id) || !aliveP(id)) return;
+    E.skips = E.skips || {};
+    if (E.skips[id]) delete E.skips[id]; else E.skips[id] = true;
+    const n = Object.keys(E.skips).filter(aliveP).length;
+    if (n >= skipNeed()) { E.feed.push({ text: '⏭ Miasto pominęło dyskusję – głosujemy!', at: Date.now() }); E.toast('⏭ Miasto pominęło dyskusję – głosujemy!'); goVote(); return; }
+    changed();
+  };
   E.vote = (id, target) => {
     if (E.phase !== 'vote' || !inGame(id)) return;
     if (!aliveP(id) || E.gagged[id]) return;
@@ -446,7 +456,7 @@ function create(opts) {
       if (E.phase === 'night') { o.nightDone = Object.keys(st.night.done).length; o.nightTotal = M.alive(st).length; }
       if (E.pass) o.pass = { cur: E.passCurrent(), idx: E.pass.idx, total: E.pass.order.length, stage: E.pass.stage, order: E.pass.order };
       if (E.morning && ['morning', 'day', 'vote', 'elim'].includes(E.phase)) o.morning = E.morning;
-      if (E.phase === 'day') o.spotlight = E.spotlight;
+      if (E.phase === 'day') { o.spotlight = E.spotlight; o.skips = Object.keys(E.skips || {}).filter(aliveP).length; o.skipNeed = skipNeed(); }
       if (E.phase === 'vote' || E.phase === 'elim') {
         o.secret = E.phase === 'vote' && E.secretVote;
         o.ballots = o.secret ? {} : st.ballots; o.votes = o.secret ? {} : M.tally(st.ballots).counts;
@@ -475,6 +485,7 @@ function create(opts) {
       if (role === 'mafia') o.matePicks = Object.fromEntries(o.mates.map(m => [m, N.mafia[m] || null]));
       if (role === 'doctor') o.lastHeal = st.lastHeal;
     }
+    if (E.phase === 'day' && p.alive) { o.mySkip = !!(E.skips || {})[id]; o.skips = pub.skips; o.skipNeed = pub.skipNeed; }
     if (E.phase === 'vote' && p.alive) { o.myVote = st.ballots[id] || null; o.voteTargets = M.alive(st).filter(q => q.id !== id).map(q => q.id); o.voteCount = pub.voteCount; o.voteTotal = pub.voteTotal; o.gagged = !!E.gagged[id]; }
     if (E.morning) o.morning = E.morning;
     if (E.phase === 'elim') o.elim = E.elim;
