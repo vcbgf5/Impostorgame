@@ -58,18 +58,45 @@ async function loadWords(base) {
   }));
   return res.filter(c => c && c.items.length);
 }
-/** 3 różne hasła z wybranych kategorii, bez powtórek (used: Set „cat|słowo”). */
-function pickWords(cats, sel, used, n = 3, rnd = Math.random) {
+/* ---------- trudność rysowania ---------- */
+// bazowa trudność kategorii: 0 = łatwo narysować (konkretne rzeczy), 2 = trudno (abstrakcje, nazwy, czynności)
+const CAT_BASE = {
+  jedzenie: 0, zwierzeta: 0, dom: 0, transport: 0, ubrania: 0, natura: 0.3, cialo: 0.3, sport: 0.6,
+  przedmioty: 0.7, szkola: 0.8, muzyka: 0.8, technologia: 0.8, miejsca: 0.8, narzedzia: 0.8, wakacje: 0.9, hobby: 1, swieta: 1, kosmos: 1, zawody: 1.1,
+  polska: 1.6, swiat: 1.6, rozrywka: 1.7, historia: 1.8, marki: 1.9, czynnosci: 1.8, emocje: 2.2,
+};
+/** Wynik trudności (ok. 0–4): kategoria + długość + liczba wyrazów. */
+function difficulty(word, catId) {
+  const w = String(word).trim(), words = w.split(/[\s-]+/).length, len = w.replace(/[\s-]/g, '').length;
+  let d = CAT_BASE[catId] !== undefined ? CAT_BASE[catId] : 1;
+  d += Math.max(0, len - 6) * 0.12 + (words - 1) * 0.7;
+  if (/^[A-ZĄĆĘŁŃÓŚŹŻ]/.test(w)) d += 0.5; // nazwy własne
+  return d;
+}
+const level = d => d < 1 ? 1 : d < 1.9 ? 2 : 3; // 1 łatwe, 2 średnie, 3 trudne
+// które poziomy trudności trafiają do wyboru w danym trybie
+const MODES = { easy: [1, 1, 2], normal: [1, 2, 3], hard: [2, 3, 3] };
+const MODE_NAMES = { easy: 'łatwy', normal: 'normalny', hard: 'trudny' };
+/** 3 hasła z wybranych kategorii (bez powtórek), posortowane od najłatwiejszego: 1, 2 i 3 pkt. */
+function pickWords(cats, sel, used, mode = 'normal', rnd = Math.random) {
+  if (typeof mode === 'number') mode = 'normal';
   const pool = [];
-  cats.filter(c => !sel || sel.includes(c.id)).forEach(c => c.items.forEach(it => pool.push({ w: it.w, cat: c.name, emoji: c.emoji, key: c.id + '|' + it.w })));
+  cats.filter(c => !sel || sel.includes(c.id)).forEach(c => c.items.forEach(it => { const d = difficulty(it.w, c.id); pool.push({ w: it.w, cat: c.name, emoji: c.emoji, key: c.id + '|' + it.w, d, lv: level(d) }); }));
   let fresh = pool.filter(x => !used.has(x.key));
-  if (fresh.length < n) { pool.forEach(x => used.delete(x.key)); fresh = pool; }
+  if (fresh.length < 3) { pool.forEach(x => used.delete(x.key)); fresh = pool; }
   const out = [];
-  while (out.length < n && fresh.length) { const i = Math.floor(rnd() * fresh.length); out.push(fresh.splice(i, 1)[0]); }
+  for (const lv of (MODES[mode] || MODES.normal)) {
+    let cand = fresh.filter(x => x.lv === lv && !out.includes(x));
+    if (!cand.length) cand = fresh.filter(x => !out.includes(x));
+    if (!cand.length) break;
+    out.push(cand[Math.floor(rnd() * cand.length)]);
+  }
+  out.sort((a, b) => a.d - b.d);
+  out.forEach((x, i) => { x.pts = i + 1; });
   return out;
 }
 
-const API = { norm, lev, check, guessPoints, DRAWER_PER_GUESS, mask, letterIdx, normCat, loadWords, pickWords };
+const API = { norm, lev, check, guessPoints, DRAWER_PER_GUESS, mask, letterIdx, normCat, loadWords, pickWords, difficulty, level, MODES, MODE_NAMES };
 if (typeof module !== 'undefined' && module.exports) module.exports = API;
 root.DrawCore = API;
 })(typeof window !== 'undefined' ? window : globalThis);

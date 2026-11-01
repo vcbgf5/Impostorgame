@@ -15,7 +15,7 @@ const store = {
 };
 const E = DrawEngine.create({ mode: 'single', settings: store.get('settings', {}), render: () => render() });
 store.get('players', []).forEach(p => E.players.push(Object.assign({ score: 0, delta: 0, online: true }, p)));
-const save = () => { store.set('players', E.players.map(p => ({ id: p.id, name: p.name, color: p.color, emoji: p.emoji, score: p.score }))); store.set('settings', { cats: E.settings.cats, time: E.settings.time, rounds: E.settings.rounds }); };
+const save = () => { store.set('players', E.players.map(p => ({ id: p.id, name: p.name, color: p.color, emoji: p.emoji, score: p.score }))); store.set('settings', { cats: E.settings.cats, time: E.settings.time, rounds: E.settings.rounds, level: E.settings.level }); };
 const player = id => E.players.find(p => p.id === id);
 const av = (p, cls = '') => p ? `<span class="av ${cls} emo" style="--c:${p.color}">${p.emoji || esc(p.name[0])}</span>` : '';
 const link = TVLink.init({ getState: () => E.pub(), onStatus: (t, ok) => { tvStat.textContent = ok ? '📺 ' + t : t ? '📺 ' + t : '📺 brak TV'; tvStat.classList.toggle('on', ok); } });
@@ -32,7 +32,8 @@ function vSetup() {
     <p class="muted small">${n < 2 ? 'Dodaj minimum 2 graczy. ' : ''}Rysują po kolei w tej kolejności.</p></section>
   <section class="card"><h2>⚙️ Zasady</h2>
     ${seg('Czas rysowania', 'time', [[60, '60s'], [80, '80s'], [100, '100s'], [120, '120s']], st.time)}
-    ${seg('Obiegi (ile razy każdy rysuje)', 'rounds', [[1, '1'], [2, '2'], [3, '3']], st.rounds)}</section>
+    ${seg('Obiegi (ile razy każdy rysuje)', 'rounds', [[1, '1'], [2, '2'], [3, '3']], st.rounds)}
+    <div class="set"><div class="set-l">Poziom słów<small>Odgadujący +2. Rysujący: ⭐ 1, ⭐⭐ 2, ⭐⭐⭐ 3 pkt</small></div><div class="seg">${[['easy', '🟢 łatwy'], ['normal', '🟡 normalny'], ['hard', '🔴 trudny']].map(([v, t]) => `<button class="${(st.level || 'normal') === v ? 'on' : ''}" data-act="lvl" data-arg="${v}">${t}</button>`).join('')}</div></div></section>
   <section class="card"><div class="row between"><h2>🗂️ Kategorie haseł</h2><button class="btn sm ghost" data-act="allCats">Wszystkie</button></div>
     <div class="chips">${E.cats.map(c => `<button class="chip ${!sel || sel.includes(c.id) ? 'on' : ''}" data-act="cat" data-arg="${c.id}">${c.emoji} ${esc(c.name)}</button>`).join('') || '<span class="muted">Ładowanie…</span>'}</div></section>
   <section class="card"><h2>📺 Telewizor</h2>
@@ -45,11 +46,11 @@ function vChoose() {
   if (ui.passFor !== E.drawer) return `<div class="center pass"><div class="step">Rysunek ${E.turn + 1}/${E.total}</div><div class="pass-anim">📱</div>${av(d, 'xl')}
     <h1>Podaj telefon:<br><span style="color:${d.color}">${esc(d.name)}</span></h1><p class="muted">Teraz rysujesz Ty! Nikt inny nie patrzy na ekran.</p>
     <button class="btn big primary" data-act="iam">To ja — ${esc(d.name)}</button></div>`;
-  return `<div class="center"><h1>✏️ Wybierz hasło</h1><div class="choices">${E.choices.map((c, i) => `<button class="choice" data-act="choose" data-arg="${i}"><b>${esc(c.w)}</b><small>${esc(c.emoji + ' ' + c.cat)}</small></button>`).join('')}</div></div>`;
+  return `<div class="center"><h1>✏️ Wybierz hasło</h1><div class="choices">${E.choices.map((c, i) => `<button class="choice lv${c.pts}" data-act="choose" data-arg="${i}"><span class="stars">${'⭐'.repeat(c.pts)} ${['', 'łatwe', 'średnie', 'trudne'][c.pts]} · dla rysującego ${c.pts} pkt</span><b>${esc(c.w)}</b><small>${esc(c.emoji + ' ' + c.cat)}</small></button>`).join('')}</div></div>`;
 }
 function vDraw() {
   const others = E.players.filter(p => p.id !== E.drawer);
-  return `<div class="drphone" data-rid="${E.roundId}"><div class="drhead"><span class="clock sm" data-timer>${fmt(E.timerLeft())}</span><span class="small">Rysujesz: <b>${esc(E.word)}</b></span></div>
+  return `<div class="drphone" data-rid="${E.roundId}"><div class="drhead"><span class="clock sm" data-timer>${fmt(E.timerLeft())}</span><span class="small">Rysujesz: <b>${esc(E.word)}</b> · ${'⭐'.repeat(E.pts || 1)}</span></div>
     <div id="padwrap" class="padwrap"></div>
     <div class="card"><b>Kto zgadł pierwszy?</b><div class="chips">${others.map(p => `<button class="chip" data-act="mark" data-arg="${p.id}">${av(p, 'sm')} ${esc(p.name)}</button>`).join('')}</div>
     <button class="btn sm ghost" data-act="nobody">🤷 Nikt nie zgadł</button></div></div>`;
@@ -87,6 +88,7 @@ const ACT = {
   set: a => { const [k, v] = a.split(':'); E.settings[k] = Number(v); render(); },
   cat: id => { const all = E.cats.map(c => c.id), s = new Set(E.settings.cats || all); s.has(id) ? s.delete(id) : s.add(id); E.settings.cats = s.size === all.length ? null : [...s]; render(); },
   allCats: () => { E.settings.cats = null; render(); },
+  lvl: v => { E.settings.level = v; render(); },
   start: () => { if (E.settings.cats && !E.settings.cats.length) return alert('Wybierz kategorię.'); ui.passFor = null; E.start(); },
   iam: () => { ui.passFor = E.drawer; render(); },
   choose: i => E.choose(E.drawer, Number(i)),

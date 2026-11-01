@@ -11,7 +11,7 @@ const HOW = [
   ['✏️', 'Rysujesz po kolei', 'Każdy po kolei dostaje 3 hasła do wyboru i rysuje palcem na swoim telefonie.'],
   ['📺', 'Rysunek na żywo', 'Kreski pojawiają się od razu na telewizorze. Nie wolno pisać liter ani mówić!'],
   ['📣', 'Krzyczcie odpowiedzi', 'Zgadujecie na głos. Rysujący klika na telefonie, kto zgadł pierwszy.'],
-  ['🏆', 'Punkty', 'Kto odgadnie, wygrywa rundę: +3 pkt. Rysujący dostaje +2.'],
+  ['⭐', 'Trudność = punkty', 'Kto odgadnie: +2 pkt. Rysujący dostaje tyle, ile warte było słowo: ⭐ łatwe 1, ⭐⭐ średnie 2, ⭐⭐⭐ trudne 3.'],
   ['🔤', 'Podpowiedzi', 'W trakcie rundy telewizor odsłania kilka liter hasła.'],
 ];
 
@@ -81,7 +81,8 @@ T.reg('dr-mlobby', {
     const s = S(), st = s.settings;
     document.getElementById('pc').textContent = `(${s.players.length})`;
     document.getElementById('mp').innerHTML = s.players.length ? s.players.map(p => btn('kick', p.id, `${av(p, 'sm')}<span>${esc(p.name)}</span>${p.score ? `<small>${p.score}</small>` : ''}${p.online ? '' : '<i>📵</i>'}`, 'pchip ' + (p.online ? '' : 'off'))).join('') : '<div class="muted empty">Nikt jeszcze nie dołączył…<br>Zeskanujcie QR telefonami 📱</div>';
-    document.getElementById('ms').innerHTML = btn('set', 'time', `⏱️ Czas rysowania: <b>${st.time} s</b>`, 'opt') + btn('set', 'rounds', `🔁 Obiegi: <b>${st.rounds}× każdy rysuje</b>`, 'opt');
+    const LV = { easy: '🟢 łatwy', normal: '🟡 normalny', hard: '🔴 trudny' };
+    document.getElementById('ms').innerHTML = btn('set', 'level', `🎯 Poziom: <b>${LV[st.level] || LV.normal}</b>`, 'opt wide') + btn('set', 'time', `⏱️ Czas rysowania: <b>${st.time} s</b>`, 'opt') + btn('set', 'rounds', `🔁 Obiegi: <b>${st.rounds}× każdy rysuje</b>`, 'opt');
     document.getElementById('mc').innerHTML = catsBtns();
   },
   mount: () => H.drawQR(),
@@ -97,7 +98,7 @@ T.reg('dr-lobby', {
     const s = S(), st = s.settings;
     document.getElementById('pc').textContent = s.players.length ? `(${s.players.length})` : '';
     document.getElementById('lp').innerHTML = s.players.map(p => `<div class="pc">${av(p, 'md')}<span>${esc(p.name)}</span>${p.score ? `<small>${p.score} pkt</small>` : ''}</div>`).join('') || '<div class="muted empty">Dodaj graczy w aplikacji…</div>';
-    document.getElementById('ls').innerHTML = [`⏱️ ${st.time} s na rysunek`, `🔁 ${st.rounds}× każdy rysuje`, `🗂️ ${(st.catList || []).filter(c => c.on).length} kategorii`].map(t => `<span class="chip">${esc(t)}</span>`).join('');
+    document.getElementById('ls').innerHTML = [`🎯 Poziom: ${({ easy: 'łatwy', normal: 'normalny', hard: 'trudny' })[st.level] || 'normalny'}`, `⏱️ ${st.time} s na rysunek`, `🔁 ${st.rounds}× każdy rysuje`, `🗂️ ${(st.catList || []).filter(c => c.on).length} kategorii`].map(t => `<span class="chip">${esc(t)}</span>`).join('');
   },
   mount: howLoop,
 });
@@ -128,7 +129,7 @@ T.reg('dr-draw', {
     return `<div class="scene drscene">
       <div class="drtop">
         <div class="who">${av(p, 'md')}<div><small>Rysuje</small><b style="color:${p.color}">${esc(p.name)}</b></div></div>
-        <div class="maskbox"><div class="mask" id="mask">${maskHTML(s.mask)}</div><small>${esc(s.cat)} · ${(s.mask || []).filter(c => c !== ' ').length} liter</small></div>
+        <div class="maskbox"><div class="mask" id="mask">${maskHTML(s.mask)}</div><small>${esc(s.cat)} · ${(s.mask || []).filter(c => c !== ' ').length} liter · <b class="ptsb p${s.pts}">${'⭐'.repeat(s.pts || 1)} rysujący +${s.pts || 1} · zgadujący +2</b></small></div>
         ${ring('md')}
       </div>
       <div class="drmain">

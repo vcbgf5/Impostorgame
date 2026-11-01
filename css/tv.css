@@ -512,3 +512,6 @@ body.nocur{cursor:none}
 .shoutp .sh-e{font-size:3.4rem;animation:wiggle 1s ease-in-out infinite}
 .shoutp b{font-size:1.5rem}.shoutp p{margin:0;color:#d7d3f5;font-size:1.05rem;line-height:1.35}
 .winline{display:flex;align-items:center;gap:.7rem;font-size:2rem;font-weight:800;animation:bounceIn .7s .5s both}
+
+.ptsb{padding:.05rem .5rem;border-radius:99rem;background:#ffffff14}
+.ptsb.p1{color:#2ee59d}.ptsb.p2{color:#ffc53d}.ptsb.p3{color:#ff4d6d}

@@ -7,7 +7,8 @@ Na starcie telewizora wybierasz **grę** (🕵️ Impostor, 🌙 Mafia albo ✏�
 Jedna osoba rysuje palcem na telefonie, a rysunek pojawia się **na żywo na telewizorze**. Reszta zgaduje.
 - Rysujący wybiera 1 z 3 haseł (z tych samych ~6000 słów i kategorii co Impostor). Na TV widać kategorię i hasło jako kreski `_ _ _ _`. W trakcie rundy odsłaniają się 2 litery.
 - **Narzędzia:** 8 kolorów, 3 grubości, gumka, cofnij, wyczyść i kolor tła.
-- **Zgadywanie:** wszyscy krzyczą odpowiedzi na głos. Rysujący klika na telefonie, kto zgadł pierwszy, i ta osoba wygrywa rundę (+3 pkt). Rysujący dostaje +2. Jest też przycisk „Nikt nie zgadł”.
+- **Zgadywanie:** wszyscy krzyczą odpowiedzi na głos. Rysujący klika na telefonie, kto zgadł pierwszy, i ta osoba wygrywa rundę (+2 pkt).
+- **Poziomy (łatwy / normalny / trudny):** rysujący wybiera 1 z 3 słów: ⭐ najłatwiejsze, ⭐⭐ średnie, ⭐⭐⭐ najtrudniejsze. Jeśli ktoś zgadnie, rysujący dostaje 1, 2 albo 3 pkt, zależnie od wybranego słowa. Tryb decyduje, jak trudne są słowa do wyboru. Jest też przycisk „Nikt nie zgadł”.
 - **Jeden telefon** (`draw.html`): telefon przechodzi do rysującego, zasady są te same.
 - **Ustawienia:** czas 60–120 s, obiegi 1–3 (ile razy każdy rysuje) i kategorie.
 - **Na koniec:** podium i galeria wszystkich rysunków z gry.

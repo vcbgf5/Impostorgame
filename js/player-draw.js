@@ -27,14 +27,14 @@ window.PlayerDraw = {
       <button class="btn sm ghost center-b" data-act="leave">Wyjdź z gry</button></div>`;
     if (P.phase === 'choose') {
       if (P.isDrawer) return `<div class="center"><div class="step">Rysunek ${P.round}/${P.total}</div><div class="big-emoji pop">✏️</div><h1>Twoja kolej!</h1><p>Wybierz hasło do narysowania:</p>
-        <div class="choices">${(P.choices || []).map((c, i) => `<button class="choice" data-act="d-choose" data-arg="${i}"><b>${esc(c.w)}</b><small>${esc(c.cat)}</small></button>`).join('')}</div>
+        <div class="choices">${(P.choices || []).map((c, i) => `<button class="choice lv${c.pts}" data-act="d-choose" data-arg="${i}"><span class="stars">${'⭐'.repeat(c.pts)} ${['', 'łatwe', 'średnie', 'trudne'][c.pts]} · dla ciebie ${c.pts} pkt</span><b>${esc(c.w)}</b><small>${esc(c.cat)}</small></button>`).join('')}</div>
         <p class="muted small">Nie pokazuj nikomu ekranu! Nie wolno pisać liter ani mówić.</p></div>`;
       return `<div class="center"><div class="step">Rysunek ${P.round}/${P.total}</div><div class="big-emoji">✏️</div><h2>${av(drawer, 'sm')} ${esc(drawer ? drawer.name : '?')} wybiera hasło…</h2><p class="muted">Za chwilę zgadujecie!</p></div>`;
     }
     if (P.phase === 'draw') {
       const head = `<div class="drhead"><span class="clock sm" data-timer>${h.fmt(h.timerLeft())}</span><span class="muted small">✅ <b id="dcount">${P.guessCount}</b> zgadło</span></div>`;
       if (P.isDrawer) return `<div class="drphone" data-rid="${P.roundId}" data-role="d">${head}
-        <div class="drword">Rysujesz: <b>${esc(P.word)}</b> <small>${esc(P.cat)}</small></div>
+        <div class="drword">Rysujesz: <b>${esc(P.word)}</b> <small>${esc(P.cat)} · ${'⭐'.repeat(P.pts || 1)} ${P.pts || 1} pkt</small></div>
         <div id="padwrap" class="padwrap"></div>
         <div class="card whoguess"><b>🗣️ Ktoś zgadł? Kliknij kto:</b>
           <div class="chips">${P.players.filter(p => p.id !== P.me.id && p.online).map(p => `<button class="chip" data-act="d-mark" data-arg="${p.id}">${av(p, 'sm')} ${esc(p.name)}</button>`).join('')}</div>

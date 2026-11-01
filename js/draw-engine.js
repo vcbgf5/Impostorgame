@@ -8,7 +8,7 @@ function create(opts) {
   const mode = opts.mode;
   const E = {
     mode, players: [], cats: [],
-    settings: Object.assign({ cats: null, time: 80, rounds: 1 }, opts.settings || {}),
+    settings: Object.assign({ cats: null, time: 80, rounds: 1, level: 'normal' }, opts.settings || {}),
     phase: 'setup', timer: null, auto: null, msg: '',
     order: [], turn: 0, total: 0, drawer: null, choices: [], word: null, cat: '', emoji: '',
     shown: [], guessed: [], chat: [], notes: {}, strokes: [], bg: '#ffffff', roundId: 0, nPts: 0,
@@ -63,7 +63,7 @@ function create(opts) {
     while (E.turn < E.total && !player(E.order[E.turn % E.order.length])) E.turn++;
     if (E.turn >= E.total) return finish();
     E.drawer = E.order[E.turn % E.order.length];
-    E.choices = D.pickWords(E.cats, E.settings.cats, E.used, 3);
+    E.choices = D.pickWords(E.cats, E.settings.cats, E.used, E.settings.level);
     E.word = null; E.strokes = []; E.nPts = 0; E.bg = '#ffffff'; E.guessed = []; E.chat = []; E.notes = {}; E.shown = [];
     E.players.forEach(p => { p.delta = 0; });
     E.roundId++;
@@ -74,7 +74,7 @@ function create(opts) {
   E.choose = (id, i) => {
     if (E.phase !== 'choose' || id !== E.drawer || !E.choices[i]) return;
     const c = E.choices[i];
-    E.word = c.w; E.cat = c.cat; E.emoji = c.emoji; E.used.add(c.key);
+    E.word = c.w; E.cat = c.cat; E.emoji = c.emoji; E.used.add(c.key); E.pts = c.pts || 1;
     E.phase = 'draw';
     E.timer = mkTimer(E.settings.time, endRound);
     changed();
@@ -122,7 +122,8 @@ function create(opts) {
   /** Tryb jednego telefonu: host zaznacza, kto zgadł (albo nikt). */
   E.markGuess = id => {
     if (E.phase !== 'draw') return;
-    if (id && id !== E.drawer && player(id)) { E.guessed.push({ id, pts: 3, at: Date.now() }); add(id, 3); add(E.drawer, 2); }
+    // odgadujący zawsze +2, rysujący tyle, ile warte było wybrane słowo (1–3)
+    if (id && id !== E.drawer && player(id)) { E.guessed.push({ id, pts: 2, at: Date.now() }); add(id, 2); add(E.drawer, E.pts || 1); }
     endRound();
   };
   E.skipChoose = () => { if (E.phase === 'choose') E.choose(E.drawer, 0); };
@@ -147,11 +148,11 @@ function create(opts) {
     const o = {
       game: 'draw', mode, phase: E.phase, msg: E.msg, round: E.turn + 1, total: E.total, roundId: E.roundId,
       players: E.players.map(pubP), drawer: E.drawer,
-      settings: { time: E.settings.time, rounds: E.settings.rounds, catList: E.cats.map(c => ({ id: c.id, name: c.name, emoji: c.emoji, n: c.items.length, on: !E.settings.cats || E.settings.cats.includes(c.id) })) },
+      settings: { time: E.settings.time, rounds: E.settings.rounds, level: E.settings.level, catList: E.cats.map(c => ({ id: c.id, name: c.name, emoji: c.emoji, n: c.items.length, on: !E.settings.cats || E.settings.cats.includes(c.id) })) },
       timer: E.timer ? { total: E.timer.total, left: E.timerLeft(), running: E.timer.running } : null,
     };
     if (E.phase === 'draw' || E.phase === 'reveal') {
-      o.mask = E.phase === 'reveal' ? [...E.word] : D.mask(E.word, E.shown); o.cat = E.emoji + ' ' + E.cat;
+      o.mask = E.phase === 'reveal' ? [...E.word] : D.mask(E.word, E.shown); o.cat = E.emoji + ' ' + E.cat; o.pts = E.pts || 1;
       o.guessed = E.guessed.map(g => ({ id: g.id, pts: g.pts })); o.chat = E.chat.slice(-8); o.bg = E.bg;
       if (withStrokes) o.strokes = E.strokes;
     }
@@ -162,7 +163,8 @@ function create(opts) {
   E.pstate = id => {
     const me = player(id), o = { type: 'p', game: 'draw', phase: E.phase, me: me && pubP(me), players: E.players.map(pubP), drawer: E.drawer, round: E.turn + 1, total: E.total, timer: E.pub(false).timer, roundId: E.roundId };
     o.isDrawer = id === E.drawer;
-    if (E.phase === 'choose' && o.isDrawer) o.choices = E.choices.map(c => ({ w: c.w, cat: c.emoji + ' ' + c.cat }));
+    if (E.phase === 'choose' && o.isDrawer) o.choices = E.choices.map(c => ({ w: c.w, cat: c.emoji + ' ' + c.cat, pts: c.pts }));
+    if (E.phase === 'draw' || E.phase === 'reveal') o.pts = E.pts || 1;
     if (E.phase === 'draw' || E.phase === 'reveal') {
       o.mask = E.phase === 'reveal' || o.isDrawer ? [...E.word] : D.mask(E.word, E.shown);
       o.cat = E.emoji + ' ' + E.cat;

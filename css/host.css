@@ -256,3 +256,8 @@ canvas.pad{width:100%;height:100%;display:block;touch-action:none;cursor:crossha
 .whoguess{width:100%;text-align:left;display:flex;flex-direction:column;gap:8px;margin:0}
 .whoguess .chip{font-size:15px;padding:8px 12px}
 .shout{text-align:center;padding:30px 10px}.shout .big-emoji{animation:pop .6s both}
+
+.choice .stars{font-size:12px;font-weight:800;letter-spacing:.04em;color:var(--mut)}
+.choice.lv1{border-color:#2ee59d88}.choice.lv1 .stars{color:#2ee59d}
+.choice.lv2{border-color:#ffc53d88}.choice.lv2 .stars{color:#ffc53d}
+.choice.lv3{border-color:#ff4d6d88}.choice.lv3 .stars{color:#ff4d6d}

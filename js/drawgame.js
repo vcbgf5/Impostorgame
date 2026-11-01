@@ -9,13 +9,13 @@ const store = {
   get(k, d) { try { const v = localStorage.getItem('impdraw_' + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
   set(k, v) { try { localStorage.setItem('impdraw_' + k, JSON.stringify(v)); } catch (e) {} },
 };
-const CYCLE = { time: [60, 80, 100, 120], rounds: [1, 2, 3] };
+const CYCLE = { time: [60, 80, 100, 120], rounds: [1, 2, 3], level: ['easy', 'normal', 'hard'] };
 let active = false, loaded = false;
 const conns = {}, lastReact = {};
 const E = DrawEngine.create({ mode: 'multi', settings: store.get('settings', {}), render });
 const player = id => E.players.find(p => p.id === id);
 const send = (c, m) => { try { if (c && c.open !== false) c.send(m); } catch (e) {} };
-const save = () => store.set('settings', { cats: E.settings.cats, time: E.settings.time, rounds: E.settings.rounds });
+const save = () => store.set('settings', { cats: E.settings.cats, time: E.settings.time, rounds: E.settings.rounds, level: E.settings.level });
 
 function render() {
   if (!active) return;
